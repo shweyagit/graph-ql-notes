@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Notes — GraphQL Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/graphql-ws@5/umd/graphql-ws.min.js"></script>
+<style>
+  :root {
+    --ink:    #1a1a2e;
+    --paper:  #f5f0e8;
+    --cream:  #ede7d9;
+    --warm:   #d4c5a9;
+    --rust:   #c0392b;
+    --gold:   #c9a84c;
+    --sage:   #4a7c59;
+    --sky:    #2980b9;
+    --text:   #2c2c3e;
+    --muted:  #7a7a8a;
+    --shadow: rgba(26,26,46,.12);
+    --p-low:    #4a7c59;
+    --p-medium: #c9a84c;
+    --p-high:   #c0392b;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(180,170,150,.18) 28px);
+  }
+
+  .app { display: grid; grid-template-columns: 360px 1fr; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--ink); color: #e0ddd8;
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh; overflow: hidden;
+  }
+  .sidebar-head { padding: 22px 22px 16px; border-bottom: 1px solid rgba(255,255,255,.07); }
+  .app-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #fff; line-height: 1; margin-bottom: 3px; }
+  .app-subtitle { font-size: 10px; color: rgba(255,255,255,.3); letter-spacing: 2px; text-transform: uppercase; }
+
+  .status-row { display: flex; gap: 7px; margin-top: 12px; flex-wrap: wrap; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 99px; font-size: 11px;
+    border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.05);
+    color: rgba(255,255,255,.35); transition: all .2s;
+  }
+  .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #555; flex-shrink: 0; }
+  .pill-dot.connected  { background: #4ade80; box-shadow: 0 0 5px #4ade80; animation: blink 2s infinite; }
+  .pill-dot.connecting { background: #fbbf24; animation: blink .5s infinite; }
+  .pill-dot.error      { background: var(--rust); }
+  .pill.connected { color: rgba(255,255,255,.75); border-color: rgba(74,222,128,.3); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .visitor-pill { color: rgba(255,255,255,.6); border-color: rgba(96,165,250,.3); }
+  #visitor-count { font-weight: 500; color: #93c5fd; }
+
+  /* ── Sidebar tabs ── */
+  .sidebar-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,.07); }
+  .stab {
+    flex: 1; padding: 10px 0; text-align: center; font-size: 11px;
+    color: rgba(255,255,255,.3); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .15s; letter-spacing: .5px; text-transform: uppercase;
+  }
+  .stab.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .stab:hover:not(.active) { color: rgba(255,255,255,.6); }
+
+  .stab-panel { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .stab-panel.active { display: flex; }
+
+  /* ── Form fields ── */
+  .form-wrap { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,.07); overflow-y: auto; }
+  .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .field { flex: 1; }
+  .form-label { font-size: 10px; color: rgba(255,255,255,.3); letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .req { color: var(--rust); }
+
+  .fi {
+    width: 100%; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+    color: #e0ddd8; font-family: 'DM Mono', monospace; font-size: 12px;
+    padding: 7px 10px; border-radius: 4px; outline: none; resize: none;
+    transition: border .15s, background .15s;
+  }
+  .fi:focus { border-color: var(--gold); background: rgba(255,255,255,.08); }
+  .fi::placeholder { color: rgba(255,255,255,.2); }
+  select.fi { cursor: pointer; }
+  select.fi option { background: #1a1a2e; }
+  textarea.fi { height: 68px; }
+
+  .tag-hint { font-size: 10px; color: rgba(255,255,255,.2); margin-top: -6px; margin-bottom: 8px; }
+
+  .btn-action {
+    width: 100%; padding: 9px; border: none; border-radius: 4px;
+    font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+    cursor: pointer; letter-spacing: .3px; transition: opacity .15s, transform .1s;
+  }
+  .btn-gold { background: var(--gold); color: var(--ink); }
+  .btn-gold:hover { opacity: .88; }
+  .btn-gold:active { transform: scale(.98); }
+  .btn-gold:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Activity log ── */
+  .activity { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  .activity-head { padding: 10px 20px 7px; font-size: 10px; color: rgba(255,255,255,.25); letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .activity-log { flex: 1; overflow-y: auto; padding: 7px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .activity-log::-webkit-scrollbar { width: 3px; }
+  .activity-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); }
+  .log-item { font-size: 11px; padding: 4px 9px; border-radius: 3px; border-left: 2px solid transparent; animation: fadeSlide .2s ease; line-height: 1.5; }
+  @keyframes fadeSlide { from { opacity:0; transform:translateY(3px) } to { opacity:1; transform:none } }
+  .log-created  { border-left-color: #4ade80; color: rgba(255,255,255,.6); background: rgba(74,222,128,.06); }
+  .log-updated  { border-left-color: var(--gold); color: rgba(255,255,255,.6); background: rgba(201,168,76,.06); }
+  .log-deleted  { border-left-color: var(--rust); color: rgba(255,255,255,.5); background: rgba(192,57,43,.06); }
+  .log-visitor  { border-left-color: #60a5fa; color: rgba(255,255,255,.5); background: rgba(96,165,250,.06); }
+  .log-attach   { border-left-color: #a78bfa; color: rgba(255,255,255,.55); background: rgba(167,139,250,.06); }
+  .log-system   { border-left-color: rgba(255,255,255,.12); color: rgba(255,255,255,.25); }
+  .log-ts { font-size: 10px; opacity: .45; margin-right: 5px; }
+
+  /* ── Main ── */
+  .main { padding: 28px 36px; overflow-y: auto; }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .toolbar h2 { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); flex-shrink: 0; }
+  .note-count { font-size: 11px; color: var(--muted); background: var(--cream); padding: 2px 10px; border-radius: 99px; border: 1px solid var(--warm); flex-shrink: 0; }
+
+  .search-wrap { flex: 1; min-width: 150px; max-width: 240px; position: relative; }
+  .search-wrap input {
+    width: 100%; background: #fff; border: 1px solid var(--warm);
+    color: var(--text); font-family: 'DM Mono', monospace;
+    font-size: 12px; padding: 7px 10px 7px 30px;
+    border-radius: 4px; outline: none; transition: border .15s, box-shadow .15s;
+  }
+  .search-wrap input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,.15); }
+  .search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 13px; pointer-events: none; opacity: .4; }
+
+  .filter-select {
+    background: #fff; border: 1px solid var(--warm);
+    color: var(--text); font-family: 'DM Mono', monospace;
+    font-size: 12px; padding: 7px 10px;
+    border-radius: 4px; outline: none; cursor: pointer; transition: border .15s;
+  }
+  .filter-select:focus { border-color: var(--gold); }
+
+  /* ── Notes grid ── */
+  .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+
+  .note-card {
+    background: #fff; border: 1px solid var(--warm); border-radius: 6px;
+    padding: 18px; display: flex; flex-direction: column; gap: 8px;
+    box-shadow: 0 2px 8px var(--shadow); transition: box-shadow .2s, transform .2s;
+    animation: cardIn .25s ease; position: relative; overflow: hidden;
+  }
+  @keyframes cardIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+  .note-card:hover { box-shadow: 0 6px 22px var(--shadow); transform: translateY(-2px); }
+  .note-card.deleting { animation: cardOut .28s ease forwards; }
+  @keyframes cardOut { to { opacity:0; transform:scale(.94); } }
+  .note-card.flash { animation: cardFlash .5s ease; }
+  @keyframes cardFlash { 0%,100%{background:#fff} 50%{background:#fef9ec} }
+  .note-card.editing { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,.15); }
+
+  .note-card::before {
+    content: ''; position: absolute;
+    left: 0; top: 10%; bottom: 10%; width: 3px; border-radius: 0 2px 2px 0;
+  }
+  .note-card.p-LOW::before    { background: var(--p-low); }
+  .note-card.p-MEDIUM::before { background: var(--p-medium); }
+  .note-card.p-HIGH::before   { background: var(--p-high); }
+
+  .card-top { display: flex; align-items: flex-start; gap: 8px; }
+  .note-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--ink); line-height: 1.3; flex: 1; }
+  .priority-badge { font-size: 9px; padding: 2px 7px; border-radius: 2px; font-weight: 500; letter-spacing: .8px; text-transform: uppercase; flex-shrink: 0; margin-top: 2px; }
+  .badge-LOW    { background: #e8f5ee; color: var(--p-low); }
+  .badge-MEDIUM { background: #fdf6e3; color: #9a7d2e; }
+  .badge-HIGH   { background: #fdecea; color: var(--p-high); }
+
+  .note-body { font-size: 12px; color: #555; line-height: 1.7; flex: 1; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 10px; padding: 2px 8px; background: var(--cream); border: 1px solid var(--warm); border-radius: 2px; color: var(--muted); }
+
+  /* ── Attachments section ── */
+  .attachments-section { border-top: 1px solid var(--cream); padding-top: 8px; }
+  .attachments-header {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+    font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; cursor: pointer;
+  }
+  .attachments-header:hover { color: var(--text); }
+  .attach-count-badge {
+    font-size: 9px; padding: 1px 6px; border-radius: 99px;
+    background: #ede7d9; color: var(--muted); border: 1px solid var(--warm);
+  }
+  .attach-count-badge.has-items { background: #e8eaf8; color: var(--sky); border-color: #b8c4e8; }
+
+  .attachments-list { display: flex; flex-direction: column; gap: 5px; }
+
+  .attachment-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 4px;
+    background: var(--cream); border: 1px solid var(--warm);
+    font-size: 11px; transition: background .12s;
+  }
+  .attachment-item:hover { background: #e5dfd5; }
+
+  .attach-icon { font-size: 14px; flex-shrink: 0; }
+  .attach-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .attach-name a { color: var(--sky); text-decoration: none; }
+  .attach-name a:hover { text-decoration: underline; }
+  .attach-type { font-size: 9px; padding: 1px 6px; border-radius: 2px; text-transform: uppercase; letter-spacing: .5px; font-weight: 500; flex-shrink: 0; }
+  .type-VIDEO   { background: #fee2e2; color: #991b1b; }
+  .type-PDF     { background: #fdecea; color: var(--rust); }
+  .type-ARTICLE { background: #e0f2fe; color: #0369a1; }
+  .type-OTHER   { background: var(--cream); color: var(--muted); }
+  .attach-size { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+  .btn-remove-attach {
+    background: none; border: none; cursor: pointer;
+    color: var(--warm); font-size: 13px; padding: 0 2px;
+    transition: color .12s; flex-shrink: 0; line-height: 1;
+  }
+  .btn-remove-attach:hover { color: var(--rust); }
+
+  /* add attachment inline row */
+  .add-attach-row {
+    display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;
+  }
+  .add-attach-row input, .add-attach-row select {
+    background: #fff; border: 1px solid var(--warm);
+    color: var(--text); font-family: 'DM Mono', monospace;
+    font-size: 11px; padding: 5px 8px; border-radius: 3px; outline: none;
+    transition: border .12s;
+  }
+  .add-attach-row input:focus, .add-attach-row select:focus { border-color: var(--gold); }
+  .attach-filename { flex: 2; min-width: 100px; }
+  .attach-url-input { flex: 2; min-width: 100px; }
+  .attach-type-sel  { flex: 0 0 90px; }
+  .btn-add-attach {
+    padding: 5px 10px; background: var(--ink); color: #fff;
+    border: none; border-radius: 3px; font-family: 'DM Mono', monospace;
+    font-size: 11px; cursor: pointer; white-space: nowrap; transition: opacity .12s;
+  }
+  .btn-add-attach:hover { opacity: .8; }
+
+  .note-meta { font-size: 10px; color: var(--warm); border-top: 1px solid var(--cream); padding-top: 7px; }
+
+  /* edit mode */
+  .edit-input, .edit-textarea, .edit-select {
+    width: 100%; border: 1px solid var(--cream); background: var(--paper);
+    font-family: 'DM Mono', monospace; color: var(--text);
+    padding: 6px 8px; border-radius: 3px; font-size: 12px;
+    outline: none; transition: border .15s;
+  }
+  .edit-input:focus, .edit-textarea:focus, .edit-select:focus { border-color: var(--gold); }
+  .edit-textarea { resize: none; min-height: 60px; }
+
+  .note-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-sm { padding: 5px 11px; border: 1px solid; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .12s; }
+  .btn-edit   { border-color: var(--warm); color: var(--muted); background: transparent; }
+  .btn-edit:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-save   { border-color: var(--sage); color: var(--sage); background: transparent; }
+  .btn-save:hover { background: var(--sage); color: #fff; }
+  .btn-cancel { border-color: var(--warm); color: var(--muted); background: transparent; }
+  .btn-delete { border-color: #fcc; color: var(--rust); background: transparent; margin-left: auto; }
+  .btn-delete:hover { background: var(--rust); color: #fff; border-color: var(--rust); }
+
+  /* ── Empty ── */
+  .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--muted); font-size: 13px; }
+  .empty-icon { font-size: 44px; margin-bottom: 10px; opacity: .4; }
+
+  /* ── Schema legend ── */
+  .legend { margin-top: 32px; padding: 18px 22px; background: var(--cream); border: 1px solid var(--warm); border-radius: 6px; font-size: 11.5px; line-height: 2; }
+  .legend h3 { font-family: 'DM Serif Display', serif; font-size: 15px; margin-bottom: 10px; color: var(--ink); }
+  .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+  .legend-section h4 { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .kw { color: var(--rust); } .val { color: var(--sage); } .typ { color: var(--sky); }
+
+  mark { background: #fef08a; border-radius: 2px; padding: 0 2px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <div class="app-title">Study Notes</div>
+      <div class="app-subtitle">GraphQL · WebSocket · Live</div>
+      <div class="status-row">
+        <div class="pill" id="ws-pill">
+          <div class="pill-dot" id="ws-dot"></div>
+          <span id="ws-label">Connecting</span>
+        </div>
+        <div class="pill visitor-pill">
+          <div class="pill-dot" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa;"></div>
+          <span id="visitor-count">–</span> online
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs: New Note | Add Attachment -->
+    <div class="sidebar-tabs">
+      <div class="stab active" onclick="switchSTab('note', this)">New Note</div>
+      <div class="stab" onclick="switchSTab('attach', this)">Add Resource</div>
+      <div class="stab" onclick="switchSTab('log', this)">Live Log</div>
+    </div>
+
+    <!-- Tab: New Note -->
+    <div class="stab-panel active" id="stab-note">
+      <div class="form-wrap">
+        <div class="form-row">
+          <div class="field">
+            <label class="form-label">Title <span class="req">*</span></label>
+            <input id="new-title" class="fi" type="text" placeholder="Required" maxlength="100">
+          </div>
+          <div style="flex:0 0 100px;">
+            <label class="form-label">Priority</label>
+            <select id="new-priority" class="fi">
+              <option value="LOW">Low</option>
+              <option value="MEDIUM" selected>Medium</option>
+              <option value="HIGH">High</option>
+            </select>
+          </div>
+        </div>
+        <label class="form-label">Body <span class="req">*</span></label>
+        <textarea id="new-body" class="fi" placeholder="Required"></textarea>
+        <label class="form-label" style="margin-top:8px;">Tags</label>
+        <input id="new-tags" class="fi" type="text" placeholder="graphql, testing, api" style="margin-bottom:4px;">
+        <div class="tag-hint">Comma-separated. Optional.</div>
+        <button class="btn-action btn-gold" id="create-btn" onclick="createNote()">+ Create Note</button>
+      </div>
+    </div>
+
+    <!-- Tab: Add Attachment/Resource -->
+    <div class="stab-panel" id="stab-attach">
+      <div class="form-wrap">
+        <label class="form-label">Note <span class="req">*</span></label>
+        <select id="attach-note-id" class="fi" style="margin-bottom:10px;">
+          <option value="">— select a note —</option>
+        </select>
+        <label class="form-label">Resource Name <span class="req">*</span></label>
+        <input id="attach-filename" class="fi" type="text" placeholder="e.g. GraphQL in 100 Seconds" style="margin-bottom:10px;">
+        <label class="form-label">Type <span class="req">*</span></label>
+        <select id="attach-type" class="fi" style="margin-bottom:10px;">
+          <option value="VIDEO">Video (YouTube etc)</option>
+          <option value="ARTICLE" selected>Article / Blog</option>
+          <option value="PDF">PDF Document</option>
+          <option value="OTHER">Other</option>
+        </select>
+        <label class="form-label">URL <span class="req">*</span></label>
+        <input id="attach-url" class="fi" type="text" placeholder="https://..." style="margin-bottom:10px;">
+        <label class="form-label">Size (bytes) <span style="color:rgba(255,255,255,.2)">optional</span></label>
+        <input id="attach-size" class="fi" type="number" placeholder="0" style="margin-bottom:10px;">
+        <button class="btn-action btn-gold" id="attach-btn" onclick="addAttachment()">+ Add Resource</button>
+      </div>
+    </div>
+
+    <!-- Tab: Live Log -->
+    <div class="stab-panel" id="stab-log">
+      <div class="activity">
+        <div class="activity-head">Live Activity</div>
+        <div class="activity-log" id="activity-log">
+          <div class="log-item log-system"><span class="log-ts">--:--</span>Initializing…</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+    <div class="toolbar">
+      <h2>All Notes</h2>
+      <span class="note-count" id="note-count">0 notes</span>
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input id="search-input" type="text" placeholder="Search…" oninput="onSearch()">
+      </div>
+      <select class="filter-select" id="priority-filter" onchange="onFilter()">
+        <option value="">All priorities</option>
+        <option value="HIGH">High</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="LOW">Low</option>
+      </select>
+      <select class="filter-select" id="attach-filter" onchange="onFilter()">
+        <option value="">All notes</option>
+        <option value="true">Has resources</option>
+        <option value="false">No resources</option>
+      </select>
+    </div>
+
+    <div class="notes-grid" id="notes-grid">
+      <div class="empty"><div class="empty-icon">📚</div>Loading…</div>
+    </div>
+
+    <div class="legend">
+      <h3>Schema Design Reference</h3>
+      <div class="legend-grid">
+        <div class="legend-section">
+          <h4>Product-Driven (server enforces)</h4>
+          <span class="kw">input</span> <span class="typ">CreateNoteInput</span> { title<span class="kw">!</span>, body<span class="kw">!</span> }<br>
+          <span class="kw">input</span> <span class="typ">AddAttachmentInput</span> { noteId<span class="kw">!</span>, url<span class="kw">!</span>, type<span class="kw">!</span> }<br>
+          <span class="kw">enum</span> <span class="typ">Priority</span> · <span class="typ">AttachmentType</span><br>
+          Cascade delete: note → attachments wiped
+        </div>
+        <div class="legend-section">
+          <h4>Consumer-Driven (client controls)</h4>
+          <span class="kw">notes</span>(<span class="val">hasAttachments</span>: Boolean) existence check<br>
+          <span class="kw">note</span> { attachments { url filename } } nested query<br>
+          <span class="kw">attachmentsByNote</span>(noteId) cascade verify<br>
+          <span class="kw">noteChanged</span> + <span class="kw">onlineCount</span> multiplexed WS
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const API = 'http://localhost:4000/graphql'
+const WS  = 'ws://localhost:4000/graphql'
+
+// ─── Helpers ──────────────────────────────────────────
+async function gql(query, variables = {}) {
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+  })
+  const { data, errors } = await res.json()
+  if (errors?.length) throw new Error(errors.map(e => e.message).join(' | '))
+  return data
+}
+
+function ts() { return new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' }) }
+
+function addLog(type, msg) {
+  const log = document.getElementById('activity-log')
+  const el  = document.createElement('div')
+  el.className = `log-item log-${type}`
+  el.innerHTML = `<span class="log-ts">${ts()}</span>${msg}`
+  log.appendChild(el)
+  log.scrollTop = log.scrollHeight
+  while (log.children.length > 80) log.removeChild(log.firstChild)
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function hl(text, term) {
+  if (!term) return esc(text)
+  const re = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi')
+  return esc(text).replace(re, '<mark>$1</mark>')
+}
+function fmtBytes(b) { if (!b) return ''; if (b < 1024) return `${b}B`; if (b < 1048576) return `${(b/1024).toFixed(0)}KB`; return `${(b/1048576).toFixed(1)}MB` }
+function fmtDate(iso) { return new Date(iso).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) }
+
+const ATTACH_ICONS = { VIDEO: '▶', PDF: '📄', ARTICLE: '🔗', OTHER: '📎' }
+
+// ─── Sidebar tab switching ────────────────────────────
+function switchSTab(name, el) {
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.stab-panel').forEach(p => p.classList.remove('active'))
+  el.classList.add('active')
+  document.getElementById('stab-' + name).classList.add('active')
+}
+
+// ─── State ────────────────────────────────────────────
+let allNotes    = []
+let searchTerm  = ''
+
+// ─── Note select in attachment tab ───────────────────
+function populateNoteSelect() {
+  const sel = document.getElementById('attach-note-id')
+  const cur = sel.value
+  sel.innerHTML = '<option value="">— select a note —</option>'
+  allNotes.forEach(n => {
+    const opt = document.createElement('option')
+    opt.value = n.id
+    opt.textContent = `#${n.id} ${n.title.slice(0,30)}`
+    if (n.id === cur) opt.selected = true
+    sel.appendChild(opt)
+  })
+}
+
+// ─── Render ───────────────────────────────────────────
+function visibleNotes() {
+  let list = allNotes
+  const q = searchTerm.toLowerCase()
+  if (q) list = list.filter(n =>
+    n.title.toLowerCase().includes(q) ||
+    n.body.toLowerCase().includes(q)  ||
+    n.tags.some(t => t.toLowerCase().includes(q)) ||
+    (n.attachments || []).some(a => a.filename.toLowerCase().includes(q))
+  )
+  const pf = document.getElementById('priority-filter').value
+  if (pf) list = list.filter(n => n.priority === pf)
+  const af = document.getElementById('attach-filter').value
+  if (af === 'true')  list = list.filter(n => n.attachments?.length > 0)
+  if (af === 'false') list = list.filter(n => !n.attachments?.length)
+  return list
+}
+
+function render() {
+  const grid  = document.getElementById('notes-grid')
+  const shown = visibleNotes()
+  document.getElementById('note-count').textContent =
+    shown.length === allNotes.length
+      ? `${allNotes.length} note${allNotes.length !== 1 ? 's' : ''}`
+      : `${shown.length} of ${allNotes.length}`
+
+  if (!shown.length) {
+    grid.innerHTML = allNotes.length
+      ? '<div class="empty"><div class="empty-icon">🔍</div>No notes match your filter.</div>'
+      : '<div class="empty"><div class="empty-icon">📚</div>No notes yet. Create one!</div>'
+    return
+  }
+
+  const editingId = document.querySelector('.note-card.editing')?.dataset.id
+  grid.innerHTML = ''
+
+  shown.forEach(note => {
+    const atts = note.attachments || []
+    const card = document.createElement('div')
+    card.className = `note-card p-${note.priority}${note.id === editingId ? ' editing' : ''}`
+    card.dataset.id = note.id
+
+    if (note.id === editingId) {
+      card.innerHTML = `
+        <div class="card-top">
+          <input class="edit-input" id="et-${note.id}" value="${esc(note.title)}">
+          <select class="edit-select" id="ep-${note.id}" style="flex:0 0 90px">
+            ${['LOW','MEDIUM','HIGH'].map(p => `<option value="${p}"${note.priority===p?' selected':''}>${p[0]+p.slice(1).toLowerCase()}</option>`).join('')}
+          </select>
+        </div>
+        <textarea class="edit-textarea" id="eb-${note.id}">${esc(note.body)}</textarea>
+        <input class="edit-input" id="etg-${note.id}" value="${esc(note.tags.join(', '))}" placeholder="tags, comma, separated">
+        <div class="note-actions">
+          <button class="btn-sm btn-save" onclick="saveEdit('${note.id}')">Save</button>
+          <button class="btn-sm btn-cancel" onclick="render()">Cancel</button>
+          <button class="btn-sm btn-delete" onclick="deleteNote('${note.id}')">Delete</button>
+        </div>`
+    } else {
+      const tagsHtml = note.tags.length
+        ? `<div class="tags">${note.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>`
+        : ''
+
+      const attachListHtml = atts.map(a => `
+        <div class="attachment-item">
+          <span class="attach-icon">${ATTACH_ICONS[a.attachmentType] || '📎'}</span>
+          <span class="attach-name"><a href="${esc(a.url)}" target="_blank" rel="noopener">${hl(a.filename, searchTerm)}</a></span>
+          <span class="attach-type type-${a.attachmentType}">${a.attachmentType}</span>
+          ${a.sizeBytes ? `<span class="attach-size">${fmtBytes(a.sizeBytes)}</span>` : ''}
+          <button class="btn-remove-attach" onclick="removeAttachment('${a.id}','${note.id}')" title="Remove">✕</button>
+        </div>`).join('')
+
+      const attachHtml = `
+        <div class="attachments-section">
+          <div class="attachments-header" onclick="toggleAttachPanel('${note.id}')">
+            <span>Resources</span>
+            <span class="attach-count-badge ${atts.length ? 'has-items' : ''}">${atts.length}</span>
+            <span style="margin-left:auto;font-size:10px;">${atts.length ? '▾' : '+'}</span>
+          </div>
+          <div class="attachments-list" id="attach-list-${note.id}" style="${atts.length ? '' : 'display:none'}">
+            ${attachListHtml}
+            <div class="add-attach-row" id="quick-attach-${note.id}" style="display:none">
+              <input class="attach-filename" placeholder="Resource name" id="qa-name-${note.id}">
+              <input class="attach-url-input" placeholder="https://..." id="qa-url-${note.id}">
+              <select class="attach-type-sel" id="qa-type-${note.id}">
+                <option value="VIDEO">Video</option>
+                <option value="ARTICLE" selected>Article</option>
+                <option value="PDF">PDF</option>
+                <option value="OTHER">Other</option>
+              </select>
+              <button class="btn-add-attach" onclick="quickAddAttachment('${note.id}')">Add</button>
+            </div>
+            <button class="btn-add-attach" style="margin-top:4px;width:100%;" onclick="toggleQuickAttach('${note.id}')">+ Add resource</button>
+          </div>
+        </div>`
+
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="note-title">${hl(note.title, searchTerm)}</div>
+          <span class="priority-badge badge-${note.priority}">${note.priority}</span>
+        </div>
+        <div class="note-body">${hl(note.body, searchTerm)}</div>
+        ${tagsHtml}
+        ${attachHtml}
+        <div class="note-meta">Updated ${fmtDate(note.updatedAt)}</div>
+        <div class="note-actions">
+          <button class="btn-sm btn-edit" onclick="startEdit('${note.id}')">Edit</button>
+          <button class="btn-sm btn-delete" onclick="deleteNote('${note.id}')">Delete</button>
+        </div>`
+    }
+    grid.appendChild(card)
+  })
+  populateNoteSelect()
+}
+
+function toggleAttachPanel(noteId) {
+  const list = document.getElementById(`attach-list-${noteId}`)
+  if (list) list.style.display = list.style.display === 'none' ? '' : 'none'
+}
+function toggleQuickAttach(noteId) {
+  const row = document.getElementById(`quick-attach-${noteId}`)
+  if (row) row.style.display = row.style.display === 'none' ? 'flex' : 'none'
+}
+
+// ─── Search / Filter ──────────────────────────────────
+let searchTimer = null
+function onSearch() {
+  searchTerm = document.getElementById('search-input').value.trim()
+  render()
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => fetchNotes(), 300)
+}
+function onFilter() { fetchNotes() }
+
+// ─── Data ─────────────────────────────────────────────
+async function fetchNotes() {
+  const search         = document.getElementById('search-input').value.trim() || null
+  const priority       = document.getElementById('priority-filter').value || null
+  const attachVal      = document.getElementById('attach-filter').value
+  const hasAttachments = attachVal === '' ? null : attachVal === 'true'
+
+  try {
+    const data = await gql(
+      `query GetNotes($search: String, $priority: Priority, $hasAttachments: Boolean) {
+         notes(search: $search, priority: $priority, hasAttachments: $hasAttachments) {
+           id title body priority tags createdAt updatedAt
+           attachments {
+             id noteId filename mimeType attachmentType url sizeBytes createdAt
+           }
+         }
+       }`,
+      { search, priority, ...(hasAttachments !== null && { hasAttachments }) }
+    )
+    allNotes = data.notes
+    render()
+  } catch (e) {
+    addLog('system', '⚠ Fetch failed: ' + e.message)
+    document.getElementById('notes-grid').innerHTML =
+      `<div class="empty"><div class="empty-icon">⚠️</div>Server unreachable.<br><small>Run: <code>npm start</code></small></div>`
+  }
+}
+
+// ─── CRUD ─────────────────────────────────────────────
+async function createNote() {
+  const title    = document.getElementById('new-title').value.trim()
+  const body     = document.getElementById('new-body').value.trim()
+  const priority = document.getElementById('new-priority').value
+  const tagsRaw  = document.getElementById('new-tags').value.trim()
+  const tags     = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : []
+
+  if (!title || !body) {
+    if (!title) document.getElementById('new-title').style.borderColor = 'var(--rust)'
+    if (!body)  document.getElementById('new-body').style.borderColor  = 'var(--rust)'
+    setTimeout(() => {
+      document.getElementById('new-title').style.borderColor = ''
+      document.getElementById('new-body').style.borderColor  = ''
+    }, 1400)
+    return
+  }
+  document.getElementById('create-btn').disabled = true
+  try {
+    await gql(
+      `mutation Create($input: CreateNoteInput!) { createNote(input: $input) { id } }`,
+      { input: { title, body, priority, tags } }
+    )
+    document.getElementById('new-title').value    = ''
+    document.getElementById('new-body').value     = ''
+    document.getElementById('new-tags').value     = ''
+    document.getElementById('new-priority').value = 'MEDIUM'
+  } catch (e) { addLog('system', '⚠ Create error: ' + e.message) }
+  document.getElementById('create-btn').disabled = false
+}
+
+function startEdit(id) {
+  document.querySelectorAll('.note-card').forEach(c => c.classList.remove('editing'))
+  render()
+  setTimeout(() => document.getElementById(`et-${id}`)?.focus(), 50)
+  const card = document.querySelector(`.note-card[data-id="${id}"]`)
+  if (card) card.classList.add('editing')
+}
+
+async function saveEdit(id) {
+  const title    = document.getElementById(`et-${id}`)?.value.trim()
+  const body     = document.getElementById(`eb-${id}`)?.value.trim()
+  const priority = document.getElementById(`ep-${id}`)?.value
+  const tagsRaw  = document.getElementById(`etg-${id}`)?.value.trim()
+  const tags     = tagsRaw != null ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : null
+  try {
+    await gql(
+      `mutation Update($id: ID!, $input: UpdateNoteInput!) { updateNote(id: $id, input: $input) { id } }`,
+      { id, input: { title, body, priority, tags } }
+    )
+  } catch (e) { addLog('system', '⚠ Update error: ' + e.message) }
+}
+
+async function deleteNote(id) {
+  if (!confirm('Delete this note and all its resources?')) return
+  const card = document.querySelector(`.note-card[data-id="${id}"]`)
+  if (card) card.classList.add('deleting')
+  setTimeout(async () => {
+    try {
+      await gql(`mutation Del($id: ID!) { deleteNote(id: $id) { id title } }`, { id })
+    } catch (e) { addLog('system', '⚠ Delete error: ' + e.message) }
+  }, 250)
+}
+
+// ─── Attachment mutations ─────────────────────────────
+async function addAttachment() {
+  const noteId         = document.getElementById('attach-note-id').value
+  const filename       = document.getElementById('attach-filename').value.trim()
+  const attachmentType = document.getElementById('attach-type').value
+  const url            = document.getElementById('attach-url').value.trim()
+  const sizeBytes      = parseInt(document.getElementById('attach-size').value) || 0
+
+  if (!noteId || !filename || !url) {
+    addLog('system', '⚠ Note, name and URL are required')
+    return
+  }
+  document.getElementById('attach-btn').disabled = true
+  try {
+    await gql(
+      `mutation AddAttach($input: AddAttachmentInput!) { addAttachment(input: $input) { id filename } }`,
+      { input: { noteId, filename, attachmentType, url, sizeBytes } }
+    )
+    document.getElementById('attach-filename').value = ''
+    document.getElementById('attach-url').value      = ''
+    document.getElementById('attach-size').value     = ''
+    addLog('attach', `📎 Added resource to note #${noteId}`)
+  } catch (e) { addLog('system', '⚠ Attach error: ' + e.message) }
+  document.getElementById('attach-btn').disabled = false
+}
+
+async function quickAddAttachment(noteId) {
+  const filename       = document.getElementById(`qa-name-${noteId}`)?.value.trim()
+  const url            = document.getElementById(`qa-url-${noteId}`)?.value.trim()
+  const attachmentType = document.getElementById(`qa-type-${noteId}`)?.value
+  if (!filename || !url) return
+  try {
+    await gql(
+      `mutation AddAttach($input: AddAttachmentInput!) { addAttachment(input: $input) { id } }`,
+      { input: { noteId, filename, attachmentType, url, sizeBytes: 0 } }
+    )
+  } catch (e) { addLog('system', '⚠ Attach error: ' + e.message) }
+}
+
+async function removeAttachment(attachId, noteId) {
+  try {
+    await gql(`mutation RemAttach($id: ID!) { removeAttachment(id: $id) { id } }`, { id: attachId })
+    addLog('attach', `✕ Removed resource from note #${noteId}`)
+  } catch (e) { addLog('system', '⚠ Remove error: ' + e.message) }
+}
+
+// ─── WebSocket Subscriptions ──────────────────────────
+function initSubscriptions() {
+  const dot  = document.getElementById('ws-dot')
+  const lbl  = document.getElementById('ws-label')
+  const pill = document.getElementById('ws-pill')
+
+  dot.className = 'pill-dot connecting'
+
+  const client = window.graphqlWs.createClient({
+    url: WS,
+    on: {
+      connected: () => {
+        dot.className = 'pill-dot connected'
+        lbl.textContent = 'Live'
+        pill.className = 'pill connected'
+        addLog('system', '🔌 WebSocket connected — noteChanged + onlineCount active')
+      },
+      closed: () => { dot.className = 'pill-dot'; lbl.textContent = 'Disconnected'; pill.className = 'pill' },
+      error:  () => { dot.className = 'pill-dot error'; lbl.textContent = 'Error' },
+    },
+  })
+
+  // ── Subscription 1: noteChanged ──────────────────────
+  client.subscribe(
+    {
+      query: `subscription {
+        noteChanged {
+          action
+          note {
+            id title body priority tags createdAt updatedAt
+            attachments { id noteId filename mimeType attachmentType url sizeBytes createdAt }
+          }
+        }
+      }`,
+    },
+    {
+      next: ({ data }) => {
+        const { action, note } = data.noteChanged
+        switch (action) {
+          case 'CREATED':
+            allNotes.push(note)
+            addLog('created', `✦ Created <strong>${note.title}</strong> [${note.priority}]`)
+            break
+          case 'UPDATED':
+            allNotes = allNotes.map(n => n.id === note.id ? note : n)
+            addLog('updated', `✎ Updated <strong>${note.title}</strong>`)
+            setTimeout(() => document.querySelector(`.note-card[data-id="${note.id}"]`)?.classList.add('flash'), 30)
+            break
+          case 'DELETED':
+            allNotes = allNotes.filter(n => n.id !== note.id)
+            addLog('deleted', `✕ Deleted <strong>${note.title}</strong> + ${note.attachments?.length || 0} resources (cascade)`)
+            break
+        }
+        render()
+      },
+      error: (e) => addLog('system', '⚠ noteChanged error: ' + e.message),
+    }
+  )
+
+  // ── Subscription 2: onlineCount ───────────────────────
+  client.subscribe(
+    { query: `subscription { onlineCount }` },
+    {
+      next: ({ data }) => {
+        const count = data.onlineCount
+        document.getElementById('visitor-count').textContent = count
+        addLog('visitor', `👁 Visitors online: <strong>${count}</strong>`)
+      },
+      error: (e) => addLog('system', '⚠ onlineCount error: ' + e.message),
+    }
+  )
+}
+
+// ─── Init ─────────────────────────────────────────────
+fetchNotes().then(() => initSubscriptions())
+
+document.getElementById('new-title').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('new-body').focus()
+})
+document.getElementById('new-body').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') createNote()
+})
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.target.value = ''; searchTerm = ''; render() }
+})
+</script>
+</body>
+</html>
