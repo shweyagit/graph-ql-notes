@@ -14,7 +14,15 @@ npm install
 npm start
 ```
 
-Then open `index.html` in your browser (double-click or use Live Server).
+### Serve the frontend on port 5173
+
+You can serve `index.html` using Python's built-in HTTP server:
+
+```bash
+python3 -m http.server 5173
+```
+
+Then open [http://localhost:5173](http://localhost:5173) in your browser to view the app.
 
 ## API
 
@@ -58,3 +66,4 @@ Open two browser tabs with `index.html`. Create/edit/delete in one tab and watch
 You can also test using the GQL+WS Playground HTML file with:
 - Endpoint: `http://localhost:4000/graphql`
 - WS URL: `ws://localhost:4000/graphql`
+![App Screenshot](screenshot.png)
