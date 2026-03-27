@@ -15,6 +15,12 @@
 <meta property="og:image" content="https://sourcebook.uk/og.svg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sourcebook">
+<link rel="apple-touch-icon" href="/icon-192.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/graphql-ws@5/umd/graphql-ws.min.js"></script>
@@ -2208,6 +2214,7 @@ async function loadPendingNotifications() {
 
 // ─── Init ─────────────────────────────────────────────
 async function init() {
+  detectShareTarget()
   const token = getToken()
   if (!token) { showAuthScreen(); return }
 
@@ -2220,6 +2227,7 @@ async function init() {
     await fetchNotes()
     initSubscriptions()
     await loadPendingNotifications()
+    if (window._pendingShare) openShareTargetModal()
   } catch { logout() }
 }
 
@@ -2233,6 +2241,111 @@ document.getElementById('search-input').addEventListener('keydown', e => {
 })
 // init create-form sections
 addCreateSection()
+
+// ─── Service Worker ────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .catch(err => console.warn('[SW] registration failed:', err))
+  })
+}
+
+// ─── Web Share Target ──────────────────────────────────
+function detectShareTarget() {
+  const params = new URLSearchParams(location.search)
+  if (!params.has('title') && !params.has('url') && !params.has('text')) return
+  // Only treat as share target if it came via the manifest share_target flow
+  history.replaceState(null, '', '/')
+  const sharedUrl   = params.get('url') || params.get('text') || ''
+  const sharedTitle = params.get('title') || ''
+  let type = 'ARTICLE'
+  if (/youtube\.com|youtu\.be|vimeo\.com/i.test(sharedUrl)) type = 'VIDEO'
+  if (/\.pdf($|\?)/i.test(sharedUrl)) type = 'PDF'
+  window._pendingShare = { url: sharedUrl, title: sharedTitle, type }
+}
+
+function openShareTargetModal() {
+  const pending = window._pendingShare
+  if (!pending) return
+  const topicSel = document.getElementById('st-topic')
+  topicSel.innerHTML = '<option value="">— choose a topic —</option>'
+  ;[...allNotes].sort((a,b) => a.title.localeCompare(b.title)).forEach(n => {
+    const o = document.createElement('option')
+    o.value = n.id; o.textContent = n.title
+    topicSel.appendChild(o)
+  })
+  document.getElementById('st-url').value  = pending.url
+  document.getElementById('st-name').value = pending.title
+  document.getElementById('st-type').value = pending.type
+  document.getElementById('st-msg').textContent = ''
+  document.getElementById('share-target-modal').classList.add('open')
+}
+
+function closeShareTargetModal() {
+  document.getElementById('share-target-modal').classList.remove('open')
+  window._pendingShare = null
+}
+
+async function saveShareTarget() {
+  const noteId = document.getElementById('st-topic').value
+  const filename = document.getElementById('st-name').value.trim()
+  const url = document.getElementById('st-url').value.trim()
+  const attachmentType = document.getElementById('st-type').value
+  const msg = document.getElementById('st-msg')
+  if (!noteId)   { msg.style.color='var(--rust)'; msg.textContent='Please choose a topic.'; return }
+  if (!filename) { msg.style.color='var(--rust)'; msg.textContent='Please enter a resource name.'; return }
+  if (!url)      { msg.style.color='var(--rust)'; msg.textContent='No URL to save.'; return }
+  const btn = document.getElementById('st-save-btn')
+  btn.disabled = true; btn.textContent = 'Saving…'
+  try {
+    await gql(
+      `mutation AddAttach($input: AddAttachmentInput!) { addAttachment(input: $input) { id } }`,
+      { input: { noteId, filename, attachmentType, url, sizeBytes: 0 } }
+    )
+    msg.style.color = 'green'; msg.textContent = '✓ Saved!'
+    await fetchNotes()
+    setTimeout(() => closeShareTargetModal(), 900)
+  } catch(e) { msg.style.color='var(--rust)'; msg.textContent='⚠ ' + e.message }
+  btn.disabled = false; btn.textContent = 'Save Resource'
+}
 </script>
+
+<!-- Web Share Target Modal -->
+<div class="modal-overlay" id="share-target-modal" onclick="if(event.target===this)closeShareTargetModal()">
+  <div class="modal" style="width:480px;max-width:95vw;">
+    <div class="modal-title">Save to Topic</div>
+    <div class="modal-subtitle">Pick a topic to save this resource under.</div>
+    <div class="modal-section">
+      <div class="modal-section-label">URL</div>
+      <input id="st-url" type="url" readonly style="width:100%;font-family:'DM Mono',monospace;font-size:12px;padding:8px 10px;border:1px solid var(--warm);border-radius:4px;outline:none;color:var(--muted);background:var(--cream);box-sizing:border-box;">
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-label">Name</div>
+      <input id="st-name" type="text" placeholder="Describe this resource…" style="width:100%;font-family:'DM Mono',monospace;font-size:12px;padding:8px 10px;border:1px solid var(--warm);border-radius:4px;outline:none;background:#fff;box-sizing:border-box;">
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-label">Type</div>
+      <select id="st-type" style="width:100%;font-family:'DM Mono',monospace;font-size:12px;padding:8px 10px;border:1px solid var(--warm);border-radius:4px;outline:none;cursor:pointer;background:#fff;box-sizing:border-box;">
+        <option value="ARTICLE" selected>Article / Blog</option>
+        <option value="VIDEO">Video</option>
+        <option value="PDF">PDF</option>
+        <option value="OTHER">Other</option>
+      </select>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-label">Topic <span class="req">*</span></div>
+      <select id="st-topic" style="width:100%;font-family:'DM Mono',monospace;font-size:12px;padding:8px 10px;border:1px solid var(--warm);border-radius:4px;outline:none;cursor:pointer;background:#fff;box-sizing:border-box;">
+        <option value="">— choose a topic —</option>
+      </select>
+      <div style="margin-top:6px;font-size:11px;color:var(--muted);">No topic yet? <span style="color:#4a90e2;cursor:pointer;text-decoration:underline;" onclick="closeShareTargetModal();document.getElementById('new-title').focus()">Create one first</span>, then share again.</div>
+    </div>
+    <div id="st-msg" style="font-size:11px;margin-bottom:8px;min-height:16px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-share-add" id="st-save-btn" onclick="saveShareTarget()" style="flex:1;padding:10px;">Save Resource</button>
+      <button class="modal-close" onclick="closeShareTargetModal()" style="flex:0 0 auto;margin:0;padding:10px 16px;width:auto;">Dismiss</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

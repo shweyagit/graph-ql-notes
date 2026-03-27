@@ -645,7 +645,7 @@ export function createApp() {
 
   const httpServer = createServer(async (req, res) => {
     // Serve frontend at root
-    if (req.url === '/' && req.method === 'GET') {
+    if ((req.url === '/' || req.url.startsWith('/?')) && req.method === 'GET') {
       try {
         const html = await readFile(join(__dirname, 'index.html'), 'utf-8')
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate' })
@@ -666,6 +666,34 @@ export function createApp() {
       } catch {
         res.writeHead(404); res.end('not found')
       }
+      return
+    }
+
+    // Serve PWA manifest
+    if (req.url === '/manifest.json' && req.method === 'GET') {
+      try {
+        const manifest = await readFile(join(__dirname, 'manifest.json'), 'utf-8')
+        res.writeHead(200, { 'Content-Type': 'application/manifest+json', 'Cache-Control': 'public, max-age=86400' })
+        res.end(manifest)
+      } catch { res.writeHead(404); res.end('not found') }
+      return
+    }
+
+    // Serve service worker
+    if (req.url === '/sw.js' && req.method === 'GET') {
+      try {
+        const sw = await readFile(join(__dirname, 'sw.js'), 'utf-8')
+        res.writeHead(200, { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Service-Worker-Allowed': '/' })
+        res.end(sw)
+      } catch { res.writeHead(404); res.end('not found') }
+      return
+    }
+
+    // Serve square SVG icons for PWA
+    if ((req.url === '/icon-192.svg' || req.url === '/icon-512.svg') && req.method === 'GET') {
+      const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#1a1a2e"/><text x="256" y="360" text-anchor="middle" font-family="Georgia,serif" font-size="340" font-weight="bold" fill="#c9a84c">S</text></svg>`
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=604800' })
+      res.end(icon)
       return
     }
 
