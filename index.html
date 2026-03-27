@@ -655,8 +655,8 @@
 
         <!-- Resource -->
         <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px;">
-          <div class="form-label" style="margin-bottom:6px;cursor:pointer;user-select:none;color:#c9a84c;" onclick="toggleNewResource()">
-            📎 Add a resource <span id="res-toggle-arrow" style="font-size:10px;">▸</span>
+          <div class="form-label" id="res-toggle-label" style="margin-bottom:6px;cursor:pointer;user-select:none;color:#c9a84c;" onclick="toggleNewResource()">
+            📎 Add a resource
           </div>
           <div id="new-resource-fields" style="display:none;">
             <input id="new-res-name" class="fi" type="text" placeholder="Resource name" style="margin-bottom:6px;">
@@ -1645,10 +1645,10 @@ async function fetchNotes() {
 // ─── CRUD ─────────────────────────────────────────────
 function toggleNewResource() {
   const fields = document.getElementById('new-resource-fields')
-  const arrow  = document.getElementById('res-toggle-arrow')
+  const label  = document.getElementById('res-toggle-label')
   const open   = fields.style.display === 'none'
   fields.style.display = open ? '' : 'none'
-  arrow.textContent    = open ? '▾' : '▸'
+  label.innerHTML = open ? '✕ Dismiss resource' : '📎 Add a resource'
 }
 
 async function createNote() {
@@ -1696,7 +1696,7 @@ async function createNote() {
     document.getElementById('new-priority').value = 'MEDIUM'
     // Collapse resource section
     document.getElementById('new-resource-fields').style.display = 'none'
-    document.getElementById('res-toggle-arrow').textContent = '▸'
+    document.getElementById('res-toggle-label').innerHTML = '📎 Add a resource'
   } catch (e) { addLog('system', '⚠ Create error: ' + e.message) }
   document.getElementById('create-btn').disabled = false
 }
