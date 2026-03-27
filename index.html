@@ -585,6 +585,17 @@
   .modal-close:hover { border-color: var(--text); color: var(--text); }
   .empty-shares { font-size: 12px; color: var(--muted); padding: 8px 0; }
 
+  /* ── About modal ── */
+  .about-modal { width: min(720px, 96vw); max-height: 90vh; overflow-y: auto; }
+  .about-intro { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 28px; font-style: italic; }
+  .about-steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .about-step { background: var(--cream); border: 1px solid var(--warm); border-radius: 10px; padding: 18px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .about-step-icon { font-size: 28px; }
+  .about-step-num { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #c9a84c; font-weight: 600; }
+  .about-step-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .about-step-body { font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .about-tip { background: rgba(201,168,76,.08); border-left: 3px solid #c9a84c; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 12px; color: var(--text); line-height: 1.6; }
+
   /* ── Mobile top bar ── */
   .mobile-topbar {
     display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200;
@@ -680,6 +691,7 @@
         </div>
       </div>
       <button class="btn-logout" onclick="logout()">Log out</button>
+      <button class="btn-logout" onclick="openAboutModal()" style="border-color:rgba(201,168,76,.3);color:rgba(201,168,76,.7);">? How it works</button>
     </div>
 
     <!-- Tabs: New Note | Live Log -->
@@ -792,6 +804,8 @@
         <option value="priority">Group by Priority</option>
       </select>
     </div>
+
+    <p style="font-family:'DM Serif Display',serif;font-size:13px;color:var(--muted);margin:-10px 0 18px;font-style:italic;">Your personal resource library — save what matters, find it when you need it.</p>
 
     <div class="notes-grid" id="notes-grid">
       <div class="empty"><div class="empty-icon">📚</div>Loading…</div>
@@ -2250,6 +2264,10 @@ if ('serviceWorker' in navigator) {
   })
 }
 
+// ─── About modal ──────────────────────────────────────
+function openAboutModal()  { document.getElementById('about-modal').classList.add('open') }
+function closeAboutModal() { document.getElementById('about-modal').classList.remove('open') }
+
 // ─── Web Share Target ──────────────────────────────────
 function detectShareTarget() {
   const params = new URLSearchParams(location.search)
@@ -2309,6 +2327,57 @@ async function saveShareTarget() {
   btn.disabled = false; btn.textContent = 'Save Resource'
 }
 </script>
+
+<!-- About Modal -->
+<div class="modal-overlay" id="about-modal" onclick="if(event.target===this)closeAboutModal()">
+  <div class="modal about-modal">
+    <div class="modal-title">How Sourcebook works</div>
+    <p class="about-intro">Sourcebook is your personal resource library. Organise everything you're learning — videos, articles, PDFs — by topic. Share topics with study partners and collaborate in real time.</p>
+
+    <div class="about-steps">
+      <div class="about-step">
+        <div class="about-step-icon">📚</div>
+        <div class="about-step-num">Step 1</div>
+        <div class="about-step-title">Create a Topic</div>
+        <div class="about-step-body">A topic is anything you're diving into — a subject, project, or idea. Give it a name, priority, and category.</div>
+      </div>
+      <div class="about-step">
+        <div class="about-step-icon">✍️</div>
+        <div class="about-step-num">Step 2</div>
+        <div class="about-step-title">Add Sections</div>
+        <div class="about-step-body">Break your topic into sections — notes, summaries, key ideas. Format with bold, italic, bullet lists, and more.</div>
+      </div>
+      <div class="about-step">
+        <div class="about-step-icon">🔗</div>
+        <div class="about-step-num">Step 3</div>
+        <div class="about-step-title">Save Resources</div>
+        <div class="about-step-body">Attach videos, articles, and PDFs to any topic. Use the browser extension on desktop to save any page in 2 clicks.</div>
+      </div>
+      <div class="about-step">
+        <div class="about-step-icon">🔍</div>
+        <div class="about-step-num">Step 4</div>
+        <div class="about-step-title">Search & Filter</div>
+        <div class="about-step-body">Find anything instantly. Filter by priority, category, or whether a topic has resources. Group by category or priority.</div>
+      </div>
+      <div class="about-step">
+        <div class="about-step-icon">🤝</div>
+        <div class="about-step-num">Step 5</div>
+        <div class="about-step-title">Collaborate</div>
+        <div class="about-step-body">Share any topic with others as Editor or Viewer. Changes sync in real time — no refreshing needed.</div>
+      </div>
+      <div class="about-step">
+        <div class="about-step-icon">📱</div>
+        <div class="about-step-num">Bonus</div>
+        <div class="about-step-title">Use on Mobile</div>
+        <div class="about-step-body">Open sourcebook.uk on your phone and add it to your home screen for a native app experience.</div>
+      </div>
+    </div>
+
+    <div class="about-tip">💡 <strong>Pro tip:</strong> Right-click any topic card to expand it into a full-screen view with all sections and resources laid out clearly.</div>
+
+    <button class="modal-close" onclick="closeAboutModal()" style="margin-top:16px;">Close</button>
+  </div>
+</div>
 
 <!-- Web Share Target Modal -->
 <div class="modal-overlay" id="share-target-modal" onclick="if(event.target===this)closeShareTargetModal()">
