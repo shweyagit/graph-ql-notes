@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Sourcebook",
+  "version": "1.0.0",
+  "description": "Save any page, video or PDF to your Sourcebook topic in one click.",
+  "permissions": ["contextMenus", "storage", "activeTab", "scripting", "tabs"],
+  "host_permissions": ["http://localhost:4000/*", "https://sourcebook.uk/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Save to Sourcebook",
+    "default_icon": {
+      "16":  "icons/icon16.svg",
+      "48":  "icons/icon48.svg",
+      "128": "icons/icon128.svg"
+    }
+  },
+  "icons": {
+    "16":  "icons/icon16.svg",
+    "48":  "icons/icon48.svg",
+    "128": "icons/icon128.svg"
+  }
+}

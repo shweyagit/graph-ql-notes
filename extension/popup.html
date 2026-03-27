@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sourcebook</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="header-title">Sourcebook</div>
+      <div class="header-subtitle">Learn · Organise · Collaborate</div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="view-loading">Connecting…</div>
+
+  <!-- Login -->
+  <div id="view-login" style="display:none">
+    <div class="login-wrap">
+      <div class="login-title">Sign in to save</div>
+      <div class="field">
+        <label class="label">Email</label>
+        <input class="input" id="login-email" type="email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label class="label">Password</label>
+        <input class="input" id="login-password" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="error" id="login-error"></div>
+      <button class="btn btn-gold" id="login-btn">Sign in</button>
+    </div>
+  </div>
+
+  <!-- Save form -->
+  <div id="view-save" style="display:none">
+    <div class="save-wrap">
+
+      <div class="resource-preview">
+        <div class="resource-type-icon" id="res-icon">🔗</div>
+        <div style="min-width:0">
+          <div class="resource-name-display" id="res-name-display">—</div>
+          <div class="resource-url" id="res-url-display">—</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Resource name</label>
+        <input class="input" id="res-name-input" type="text" placeholder="Name this resource…">
+      </div>
+
+      <div class="label" style="margin-bottom:6px;">Type</div>
+      <div class="type-pills">
+        <button class="type-pill" data-type="VIDEO">▶ Video</button>
+        <button class="type-pill" data-type="ARTICLE">📄 Article</button>
+        <button class="type-pill" data-type="PDF">📑 PDF</button>
+        <button class="type-pill" data-type="OTHER">📎 Other</button>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label class="label">Save to topic</label>
+        <select class="select" id="topic-select">
+          <option value="">Loading topics…</option>
+        </select>
+      </div>
+
+      <div class="error" id="save-error"></div>
+      <button class="btn btn-gold" id="save-btn">Save to Sourcebook</button>
+
+      <div style="text-align:center;margin-top:12px;">
+        <button class="btn-text-link" id="logout-btn">Sign out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div id="view-success" style="display:none">
+    <div class="success-wrap">
+      <div class="success-icon">✦</div>
+      <div class="success-msg">Saved!</div>
+      <div class="success-sub" id="success-sub">Added to your topic.</div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
