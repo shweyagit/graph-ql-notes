@@ -52,7 +52,7 @@
   }
   .sidebar.expanded { width: 620px; }
   .sidebar-head { padding: 22px 22px 16px; border-bottom: 1px solid rgba(255,255,255,.07); }
-  .app-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #4ecdc4; line-height: 1; margin-bottom: 3px; }
+  .app-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #fff; line-height: 1; margin-bottom: 3px; }
   .app-subtitle { font-size: 10px; color: #c9a84c; letter-spacing: 2px; text-transform: uppercase; }
 
 
@@ -119,7 +119,7 @@
     font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
     cursor: pointer; letter-spacing: .3px; transition: opacity .15s, transform .1s;
   }
-  .btn-gold { background: #4ecdc4; color: #1a1a2e; }
+  .btn-gold { background: #50c878; color: #0f2016; }
   .btn-gold:hover { opacity: .88; }
   .btn-gold:active { transform: scale(.98); }
   .btn-gold:disabled { opacity: .4; cursor: not-allowed; }
@@ -302,8 +302,8 @@
   ul.b-diamond  { list-style-type: "◆  "; }
   ul.b-arrow    { list-style-type: "→  "; }
   ul.b-star     { list-style-type: "★  "; }
-  .btn-add-sec { width: 100%; padding: 6px; border: 1px dashed rgba(78,205,196,.4); border-radius: 4px; background: transparent; color: #4ecdc4; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-top: 2px; }
-  .btn-add-sec:hover { border-color: #4ecdc4; color: #6ed9d1; background: rgba(78,205,196,.07); }
+  .btn-add-sec { width: 100%; padding: 6px; border: 1px dashed rgba(80,200,120,.4); border-radius: 4px; background: transparent; color: #50c878; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-top: 2px; }
+  .btn-add-sec:hover { border-color: #50c878; color: #6ddb8f; background: rgba(80,200,120,.07); }
 
   /* ── Sections (card edit mode) ── */
   .edit-sections { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
@@ -316,8 +316,8 @@
   .edit-sec-editor { min-height: 50px; max-height: 120px; overflow-y: auto; padding: 6px 8px; outline: none; font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.6; color: var(--text); }
   .edit-sec-editor:empty::before { content: attr(data-ph); color: rgba(0,0,0,.2); pointer-events: none; display: block; }
   .edit-sec-editor ul, .edit-sec-editor ol { padding-left: 16px; }
-  .btn-add-edit-sec { width: 100%; padding: 5px; border: 1px dashed rgba(78,205,196,.4); border-radius: 3px; background: transparent; color: #4ecdc4; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-bottom: 4px; }
-  .btn-add-edit-sec:hover { border-color: #4ecdc4; color: #6ed9d1; background: rgba(78,205,196,.07); }
+  .btn-add-edit-sec { width: 100%; padding: 5px; border: 1px dashed rgba(80,200,120,.4); border-radius: 3px; background: transparent; color: #50c878; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-bottom: 4px; }
+  .btn-add-edit-sec:hover { border-color: #50c878; color: #6ddb8f; background: rgba(80,200,120,.07); }
 
   /* ── Sections display on card ── */
   .topic-sections { display: flex; flex-direction: column; gap: 10px; }
@@ -502,7 +502,7 @@
     box-shadow: 7px 7px 0 var(--ink);
   }
 
-  .auth-logo { font-family: 'DM Serif Display', serif; font-size: 28px; color: #4ecdc4; margin-bottom: 4px; }
+  .auth-logo { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--ink); margin-bottom: 4px; }
   .auth-tagline { font-size: 11px; color: #c9a84c; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 28px; }
 
   .auth-tabs { display: flex; border-bottom: 2.5px solid var(--ink); margin-bottom: 20px; }
@@ -655,7 +655,7 @@
 
         <!-- Resource -->
         <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px;">
-          <div class="form-label" style="margin-bottom:6px;cursor:pointer;user-select:none;color:#4ecdc4;" onclick="toggleNewResource()">
+          <div class="form-label" style="margin-bottom:6px;cursor:pointer;user-select:none;color:#50c878;" onclick="toggleNewResource()">
             📎 Add a resource <span id="res-toggle-arrow" style="font-size:10px;">▸</span>
           </div>
           <div id="new-resource-fields" style="display:none;">
