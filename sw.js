@@ -1,5 +1,5 @@
 // Sourcebook Service Worker
-const CACHE = 'sourcebook-v1'
+const CACHE = 'sourcebook-v2'
 const PRECACHE = ['/', '/manifest.json']
 
 self.addEventListener('install', event => {
