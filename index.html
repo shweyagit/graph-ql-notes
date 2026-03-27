@@ -1137,7 +1137,8 @@ function addCreateSection(name = '', content = '') {
       <button class="sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
       <button class="sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
       <span class="sec-tbtn-div"></span>
-      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">Bullet ▾</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option><option value="ol">1.</option></select>
+      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">Bullet ▾</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option></select>
+      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List ▾</option><option value="ol:decimal">1. 2. 3.</option><option value="ol:alpha">a. b. c.</option><option value="ol:ALPHA">A. B. C.</option><option value="ol:roman">i. ii. iii.</option></select>
     </div>
     <div class="sec-editor" contenteditable="true" data-ph="let your thoughts flow…">${content}</div>`
   c.appendChild(d)
@@ -1179,7 +1180,8 @@ function addEditSection(containerId, name = '', content = '') {
       <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('bold')"><b>B</b></button>
       <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
       <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
-      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">Bullet ▾</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option><option value="ol">1.</option></select>
+      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">Bullet ▾</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option></select>
+      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List ▾</option><option value="ol:decimal">1. 2. 3.</option><option value="ol:alpha">a. b. c.</option><option value="ol:ALPHA">A. B. C.</option><option value="ol:roman">i. ii. iii.</option></select>
     </div>
     <div class="edit-sec-editor" contenteditable="true" data-ph="let your thoughts flow…">${content}</div>`
   c.appendChild(d)
@@ -1243,9 +1245,18 @@ function applyList(sel) {
     s.removeAllRanges()
     s.addRange(_savedRange)
   }
-  if (val === 'ol') { document.execCommand('insertOrderedList', false, null); return }
+  const [type, style] = val.split(':')
+  if (type === 'ol') {
+    document.execCommand('insertOrderedList', false, null)
+    const anchor = window.getSelection()?.anchorNode
+    const ol = anchor?.parentElement?.closest('ol') || anchor?.closest?.('ol')
+    if (ol) {
+      const typeMap = { decimal: '1', alpha: 'a', ALPHA: 'A', roman: 'i' }
+      ol.type = typeMap[style] || '1'
+    }
+    return
+  }
   document.execCommand('insertUnorderedList', false, null)
-  const [, style] = val.split(':')
   if (style && style !== 'dot') {
     const anchor = window.getSelection()?.anchorNode
     const ul = anchor?.parentElement?.closest('ul') || anchor?.closest?.('ul')
