@@ -1117,8 +1117,8 @@ function addCreateSection(name = '', content = '') {
       <span class="sec-tbtn-div"></span>
       <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyFontSize(this)"><option value="">Size</option><option value="10">10</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18">18</option></select>
       <span class="sec-tbtn-div"></span>
-      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">Bullet ▾</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option></select>
-      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List ▾</option><option value="ol:decimal">1. 2. 3.</option><option value="ol:alpha">a. b. c.</option><option value="ol:ALPHA">A. B. C.</option><option value="ol:roman">i. ii. iii.</option></select>
+      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">Bullet</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option></select>
+      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List</option><option value="ol:decimal">1. 2. 3.</option><option value="ol:alpha">a. b. c.</option><option value="ol:ALPHA">A. B. C.</option><option value="ol:roman">i. ii. iii.</option></select>
     </div>
     <div class="sec-editor" contenteditable="true" data-ph="let your thoughts flow…">${content}</div>`
   c.appendChild(d)
@@ -1161,8 +1161,8 @@ function addEditSection(containerId, name = '', content = '') {
       <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
       <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
       <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyFontSize(this)"><option value="">Size</option><option value="10">10</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18">18</option></select>
-      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">Bullet ▾</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option></select>
-      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List ▾</option><option value="ol:decimal">1. 2. 3.</option><option value="ol:alpha">a. b. c.</option><option value="ol:ALPHA">A. B. C.</option><option value="ol:roman">i. ii. iii.</option></select>
+      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">Bullet</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option></select>
+      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List</option><option value="ol:decimal">1. 2. 3.</option><option value="ol:alpha">a. b. c.</option><option value="ol:ALPHA">A. B. C.</option><option value="ol:roman">i. ii. iii.</option></select>
     </div>
     <div class="edit-sec-editor" contenteditable="true" data-ph="let your thoughts flow…">${content}</div>`
   c.appendChild(d)
