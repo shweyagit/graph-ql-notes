@@ -781,7 +781,7 @@ if (isDirectRun) {
   await initDb()
   const { httpServer } = createApp()
   const PORT = process.env.PORT || 4000
-  httpServer.listen(PORT, () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`\n📝  Frontend     →  http://localhost:${PORT}/`)
     console.log(`🚀  GraphQL API  →  http://localhost:${PORT}/graphql`)
     console.log(`🔌  WebSocket    →  ws://localhost:${PORT}/graphql`)
