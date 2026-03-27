@@ -657,6 +657,18 @@ export function createApp() {
       return
     }
 
+    // Serve og.svg for social previews
+    if (req.url === '/og.svg' && req.method === 'GET') {
+      try {
+        const svg = await readFile(join(__dirname, 'og.svg'), 'utf-8')
+        res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' })
+        res.end(svg)
+      } catch {
+        res.writeHead(404); res.end('not found')
+      }
+      return
+    }
+
     // Handle Stripe webhook before yoga
     if (req.url === '/webhook/stripe' && req.method === 'POST') {
       if (!stripe || !stripeWebhookSecret) {
