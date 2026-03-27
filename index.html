@@ -55,21 +55,6 @@
   .app-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #fff; line-height: 1; margin-bottom: 3px; }
   .app-subtitle { font-size: 10px; color: rgba(255,255,255,.3); letter-spacing: 2px; text-transform: uppercase; }
 
-  .status-row { display: flex; gap: 7px; margin-top: 12px; flex-wrap: wrap; }
-  .pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 10px; border-radius: 99px; font-size: 11px;
-    border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.05);
-    color: rgba(255,255,255,.35); transition: all .2s;
-  }
-  .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #555; flex-shrink: 0; }
-  .pill-dot.connected  { background: #4ade80; box-shadow: 0 0 5px #4ade80; animation: blink 2s infinite; }
-  .pill-dot.connecting { background: #fbbf24; animation: blink .5s infinite; }
-  .pill-dot.error      { background: var(--rust); }
-  .pill.connected { color: rgba(255,255,255,.75); border-color: rgba(74,222,128,.3); }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
-  .visitor-pill { color: rgba(255,255,255,.6); border-color: rgba(96,165,250,.3); }
-  #visitor-count { font-weight: 500; color: #93c5fd; }
 
   /* ── Sidebar tabs ── */
   .sidebar-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,.07); }
@@ -600,12 +585,6 @@
     <div class="sidebar-head">
       <div class="app-title">Sourcebook</div>
       <div class="app-subtitle">Learn · Organize · Collaborate</div>
-      <div class="status-row">
-        <div class="pill" id="ws-pill">
-          <div class="pill-dot" id="ws-dot"></div>
-          <span id="ws-label">Connecting</span>
-        </div>
-      </div>
     </div>
 
     <!-- User bar -->
@@ -1821,23 +1800,10 @@ function initSubscriptions() {
   if (_wsUnsub2) { try { _wsUnsub2() } catch(_) {} _wsUnsub2 = null }
   if (_wsClient) { try { _wsClient.dispose() } catch(_) {} _wsClient = null }
 
-  const dot  = document.getElementById('ws-dot')
-  const lbl  = document.getElementById('ws-label')
-  const pill = document.getElementById('ws-pill')
-
-  dot.className = 'pill-dot connecting'
-
   const client = _wsClient = window.graphqlWs.createClient({
     url: WS,
     on: {
-      connected: () => {
-        dot.className = 'pill-dot connected'
-        lbl.textContent = 'Live'
-        pill.className = 'pill connected'
-        addLog('system', '🔌 WebSocket connected — noteChanged + onlineCount active')
-      },
-      closed: () => { dot.className = 'pill-dot'; lbl.textContent = 'Disconnected'; pill.className = 'pill' },
-      error:  () => { dot.className = 'pill-dot error'; lbl.textContent = 'Error' },
+      error: () => addLog('system', '⚠ Real-time updates unavailable — changes may not sync instantly'),
     },
   })
 
@@ -1910,7 +1876,7 @@ function initSubscriptions() {
         render()
         } catch(err) { console.error('[sub] handler crashed:', err) }
       },
-      error: (e) => addLog('system', '⚠ noteChanged error: ' + e.message),
+      error: () => {},
     }
   )
 
