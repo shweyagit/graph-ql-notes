@@ -638,7 +638,7 @@
         <div id="new-sections" class="sections-container"></div>
         <button type="button" class="btn-add-sec" onclick="addCreateSection()">+ Add Section</button>
         <label class="form-label" style="margin-top:8px;">Category</label>
-        <select id="new-category" class="fi-cat" style="margin-bottom:10px;">
+        <select id="new-category" class="fi-cat" style="margin-bottom:6px;" onchange="toggleCustomCat(this,'new-custom-cat')">
           <option value="">— none —</option>
           <option value="Education">📚 Education</option>
           <option value="Brainstorming">💡 Brainstorming</option>
@@ -648,7 +648,10 @@
           <option value="Personal">🌿 Personal</option>
           <option value="Health">🏃 Health</option>
           <option value="Finance">💰 Finance</option>
+          <option value="__custom__">✏ Create your own…</option>
         </select>
+        <input id="new-custom-cat" class="fi" type="text" placeholder="Your category name" style="display:none;margin-bottom:10px;">
+
         <label class="form-label">Tags</label>
         <input id="new-tags" class="fi" type="text" placeholder="how would you find this later?" style="margin-bottom:4px;">
         <div class="tag-hint">Comma-separated.</div>
@@ -1643,6 +1646,12 @@ async function fetchNotes() {
 }
 
 // ─── CRUD ─────────────────────────────────────────────
+function toggleCustomCat(sel, inputId) {
+  const input = document.getElementById(inputId)
+  input.style.display = sel.value === '__custom__' ? '' : 'none'
+  if (sel.value === '__custom__') input.focus()
+}
+
 function toggleNewResource() {
   const fields = document.getElementById('new-resource-fields')
   const label  = document.getElementById('res-toggle-label')
@@ -1657,7 +1666,10 @@ async function createNote() {
   const body     = sections.length ? JSON.stringify(sections) : ''
   const priority = document.getElementById('new-priority').value
   const tagsRaw  = document.getElementById('new-tags').value.trim()
-  const category = document.getElementById('new-category').value
+  const catSel   = document.getElementById('new-category').value
+  const category = catSel === '__custom__'
+    ? document.getElementById('new-custom-cat').value.trim()
+    : catSel
   const tags     = [
     ...(category ? [`cat:${category}`] : []),
     ...(tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [])
@@ -1693,6 +1705,8 @@ async function createNote() {
     clearCreateSections()
     document.getElementById('new-tags').value     = ''
     document.getElementById('new-category').value = ''
+    document.getElementById('new-custom-cat').value = ''
+    document.getElementById('new-custom-cat').style.display = 'none'
     document.getElementById('new-priority').value = 'MEDIUM'
     // Collapse resource section
     document.getElementById('new-resource-fields').style.display = 'none'
