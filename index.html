@@ -1137,7 +1137,7 @@ function addCreateSection(name = '', content = '') {
       <button class="sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
       <button class="sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
       <span class="sec-tbtn-div"></span>
-      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List ▾</option><option value="ul:dot">• Bullet</option><option value="ul:flower">✿ Flower</option><option value="ul:triangle">▶ Triangle</option><option value="ul:idea">✦ Idea</option><option value="ul:diamond">◆ Diamond</option><option value="ul:arrow">→ Arrow</option><option value="ul:star">★ Star</option><option value="ol">1. Numbered</option></select>
+      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">• ▾</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option><option value="ol">1.</option></select>
     </div>
     <div class="sec-editor" contenteditable="true" data-ph="let your thoughts flow…">${content}</div>`
   c.appendChild(d)
@@ -1179,7 +1179,7 @@ function addEditSection(containerId, name = '', content = '') {
       <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('bold')"><b>B</b></button>
       <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
       <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
-      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List ▾</option><option value="ul:dot">• Bullet</option><option value="ul:flower">✿ Flower</option><option value="ul:triangle">▶ Triangle</option><option value="ul:idea">✦ Idea</option><option value="ul:diamond">◆ Diamond</option><option value="ul:arrow">→ Arrow</option><option value="ul:star">★ Star</option><option value="ol">1. Numbered</option></select>
+      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">• ▾</option><option value="ul:dot">•</option><option value="ul:flower">✿</option><option value="ul:triangle">▶</option><option value="ul:idea">✦</option><option value="ul:diamond">◆</option><option value="ul:arrow">→</option><option value="ul:star">★</option><option value="ol">1.</option></select>
     </div>
     <div class="edit-sec-editor" contenteditable="true" data-ph="let your thoughts flow…">${content}</div>`
   c.appendChild(d)
