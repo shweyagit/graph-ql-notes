@@ -1601,7 +1601,13 @@ function toggleAttachPanel(noteId) {
 }
 function toggleQuickAttach(noteId) {
   const row = document.getElementById(`quick-attach-${noteId}`)
-  if (row) row.style.display = row.style.display === 'none' ? 'flex' : 'none'
+  if (!row) return
+  const isOpen = row.style.display !== 'none'
+  if (isOpen) {
+    const url = document.getElementById(`qa-url-${noteId}`)?.value.trim()
+    if (url) { quickAddAttachment(noteId); return }
+  }
+  row.style.display = isOpen ? 'none' : 'flex'
 }
 
 // ─── Search / Filter ──────────────────────────────────
