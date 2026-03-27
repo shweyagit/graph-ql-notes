@@ -659,7 +659,7 @@
             </select>
           </div>
         </div>
-        <label class="form-label">Sections <span style="opacity:.4;font-size:9px;">optional</span></label>
+        <label class="form-label">Sections</label>
         <div id="new-sections" class="sections-container"></div>
         <button type="button" class="btn-add-sec" onclick="addCreateSection()">+ Add Section</button>
         <label class="form-label" style="margin-top:8px;">Category</label>
@@ -676,12 +676,12 @@
         </select>
         <label class="form-label">Tags</label>
         <input id="new-tags" class="fi" type="text" placeholder="how would you find this later?" style="margin-bottom:4px;">
-        <div class="tag-hint">Comma-separated. Optional.</div>
+        <div class="tag-hint">Comma-separated.</div>
 
-        <!-- Optional resource -->
+        <!-- Resource -->
         <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px;">
           <div class="form-label" style="margin-bottom:6px;cursor:pointer;user-select:none;" onclick="toggleNewResource()">
-            📎 Add a resource <span id="res-toggle-arrow" style="font-size:10px;opacity:.6;">▸ optional</span>
+            📎 Add a resource <span id="res-toggle-arrow" style="font-size:10px;opacity:.6;">▸</span>
           </div>
           <div id="new-resource-fields" style="display:none;">
             <input id="new-res-name" class="fi" type="text" placeholder="Resource name" style="margin-bottom:6px;">
@@ -695,7 +695,7 @@
           </div>
         </div>
 
-        <button class="btn-action btn-gold" id="create-btn" onclick="createNote()">+ Add Topic</button>
+        <button class="btn-action btn-gold" id="create-btn" onclick="createNote()" style="margin-top:16px;">+ Add Topic</button>
       </div>
     </div>
 
@@ -1673,7 +1673,7 @@ function toggleNewResource() {
   const arrow  = document.getElementById('res-toggle-arrow')
   const open   = fields.style.display === 'none'
   fields.style.display = open ? '' : 'none'
-  arrow.textContent    = open ? '▾ optional' : '▸ optional'
+  arrow.textContent    = open ? '▾' : '▸'
 }
 
 async function createNote() {
@@ -1721,7 +1721,7 @@ async function createNote() {
     document.getElementById('new-priority').value = 'MEDIUM'
     // Collapse resource section
     document.getElementById('new-resource-fields').style.display = 'none'
-    document.getElementById('res-toggle-arrow').textContent = '▸ optional'
+    document.getElementById('res-toggle-arrow').textContent = '▸'
   } catch (e) { addLog('system', '⚠ Create error: ' + e.message) }
   document.getElementById('create-btn').disabled = false
 }
