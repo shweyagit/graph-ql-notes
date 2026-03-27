@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Study Notes — GraphQL Live</title>
+<title>Sourcebook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/graphql-ws@5/umd/graphql-ws.min.js"></script>
@@ -27,21 +27,23 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: var(--paper);
+    background: #f7f6f2;
     color: var(--text);
     font-family: 'DM Mono', monospace;
     min-height: 100vh;
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(180,170,150,.18) 28px);
   }
 
-  .app { display: grid; grid-template-columns: 360px 1fr; min-height: 100vh; }
+  .app { display: flex; min-height: 100vh; }
 
   /* ── Sidebar ── */
   .sidebar {
     background: var(--ink); color: #e0ddd8;
     display: flex; flex-direction: column;
     position: sticky; top: 0; height: 100vh; overflow: hidden;
+    width: 360px; flex-shrink: 0;
+    transition: width .3s ease;
   }
+  .sidebar.expanded { width: 620px; }
   .sidebar-head { padding: 22px 22px 16px; border-bottom: 1px solid rgba(255,255,255,.07); }
   .app-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #fff; line-height: 1; margin-bottom: 3px; }
   .app-subtitle { font-size: 10px; color: rgba(255,255,255,.3); letter-spacing: 2px; text-transform: uppercase; }
@@ -76,7 +78,31 @@
   .stab-panel.active { display: flex; }
 
   /* ── Form fields ── */
-  .form-wrap { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,.07); overflow-y: auto; }
+  .form-wrap { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,.07); overflow-y: auto; cursor: default; }
+
+  /* ── Expanded sidebar ── */
+  .sidebar.expanded .sec-editor { max-height: 200px; }
+  .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.15); z-index: 5; cursor: pointer; }
+  .sidebar-backdrop.show { display: block; }
+
+  /* ── Sidebar context menu ── */
+  .sidebar-ctx {
+    display: none; position: fixed; z-index: 9999;
+    background: #fff; border: 1.5px solid var(--ink);
+    border-radius: 8px; box-shadow: 4px 4px 0 var(--ink);
+    padding: 4px 0; min-width: 160px; font-family: 'DM Mono', monospace;
+  }
+  .sidebar-ctx.show { display: block; }
+  .sidebar-ctx-item {
+    padding: 9px 16px; font-size: 12px; color: var(--ink);
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+  }
+  .sidebar-ctx-item:hover { background: var(--cream); }
+
+  /* ── List dropdown in toolbars ── */
+  .sec-list-sel { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.55); font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 5px; border-radius: 2px; cursor: pointer; outline: none; }
+  .sec-list-sel option { background: #1a1a2e; color: #e0ddd8; }
+  .edit-sec-list-sel { background: var(--cream); border: 1px solid var(--warm); color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 5px; border-radius: 2px; cursor: pointer; outline: none; }
   .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
   .field { flex: 1; }
   .form-label { font-size: 10px; color: rgba(255,255,255,.3); letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 4px; }
@@ -123,7 +149,7 @@
   .log-ts { font-size: 10px; opacity: .45; margin-right: 5px; }
 
   /* ── Main ── */
-  .main { padding: 28px 36px; overflow-y: auto; }
+  .main { padding: 32px 40px; overflow-y: auto; flex: 1; min-width: 0; }
 
   .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 22px; flex-wrap: wrap; }
   .toolbar h2 { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); flex-shrink: 0; }
@@ -150,14 +176,33 @@
   /* ── Notes grid ── */
   .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
 
+  /* ── Group by ── */
+  .group-section { margin-bottom: 32px; }
+  .group-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; cursor: pointer; user-select: none;
+  }
+  .group-header-label {
+    font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--ink);
+  }
+  .group-header-count {
+    font-size: 11px; color: var(--muted); background: var(--cream);
+    padding: 2px 9px; border-radius: 99px; border: 1px solid var(--warm);
+  }
+  .group-header-toggle { font-size: 11px; color: var(--muted); margin-left: auto; transition: transform .2s; }
+  .group-section.collapsed .group-header-toggle { transform: rotate(-90deg); }
+  .group-section.collapsed .group-grid { display: none; }
+  .group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+  .group-divider { border: none; border-top: 1px solid var(--cream); margin-bottom: 32px; }
+
   .note-card {
-    background: #fff; border: 1px solid var(--warm); border-radius: 6px;
+    background: #fff; border: 1px solid rgba(210,205,195,.8); border-radius: 10px;
     padding: 18px; display: flex; flex-direction: column; gap: 8px;
-    box-shadow: 0 2px 8px var(--shadow); transition: box-shadow .2s, transform .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.07); transition: box-shadow .2s, transform .2s;
     animation: cardIn .25s ease; position: relative; overflow: hidden;
   }
   @keyframes cardIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
-  .note-card:hover { box-shadow: 0 6px 22px var(--shadow); transform: translateY(-2px); }
+  .note-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.11); transform: translateY(-2px); }
   .note-card.deleting { animation: cardOut .28s ease forwards; }
   @keyframes cardOut { to { opacity:0; transform:scale(.94); } }
   .note-card.flash { animation: cardFlash .5s ease; }
@@ -170,6 +215,69 @@
   }
   .note-card.p-LOW::before    { background: var(--p-low); }
   .note-card.p-MEDIUM::before { background: var(--p-medium); }
+
+  /* ── Note expand modal ── */
+  .note-expand-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(26,26,46,.55); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  .note-expand-overlay.open { display: flex; }
+  .note-expand-modal {
+    background: #fff; border-radius: 14px; width: min(1100px, 96vw);
+    max-height: 96vh; overflow-y: auto; padding: 48px 56px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.22); position: relative;
+    animation: cardIn .2s ease;
+  }
+  .note-expand-close {
+    position: absolute; top: 16px; right: 18px;
+    background: none; border: none; font-size: 20px; cursor: pointer;
+    color: var(--muted); line-height: 1;
+  }
+  .note-expand-close:hover { color: var(--ink); }
+  .note-expand-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--ink); margin-bottom: 6px; line-height: 1.2; }
+  .note-expand-meta { font-size: 11px; color: var(--muted); margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .note-expand-body { font-size: 15px; color: var(--text); line-height: 1.9; }
+  .note-expand-body .topic-sec { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid #ede8df; }
+  .note-expand-body .topic-sec:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+  .note-expand-body .topic-sec-title { font-weight: 600; font-size: 12px; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; }
+  .note-expand-body .topic-sec-body { color: var(--text); }
+  .note-expand-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
+  .note-expand-header-actions { display: flex; gap: 8px; flex-shrink: 0; margin-top: 4px; }
+  .btn-expand-edit { background: var(--ink); color: #fff; border: none; border-radius: 6px; padding: 7px 16px; font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; }
+  .btn-expand-edit:hover { opacity: .85; }
+  .btn-expand-save { background: var(--gold); color: var(--ink); border: 1.5px solid var(--ink); border-radius: 6px; padding: 7px 16px; font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; font-weight: 600; }
+  .btn-expand-cancel { background: none; color: var(--muted); border: 1.5px solid var(--warm); border-radius: 6px; padding: 7px 14px; font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; }
+  .note-expand-edit-form { display: flex; flex-direction: column; gap: 14px; }
+  .note-expand-edit-form .fi { background: var(--cream); border: 1px solid var(--warm); color: var(--ink); font-family: 'DM Mono', monospace; font-size: 13px; padding: 9px 12px; border-radius: 6px; width: 100%; outline: none; }
+  .note-expand-edit-form .fi:focus { border-color: var(--gold); }
+  #em-sections-wrap .edit-sec-block { border: 1px solid var(--cream); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+  #em-sections-wrap .edit-sec-block .sec-name-fi, #em-sections-wrap .edit-sec-block .edit-sec-name { background: var(--cream); border: none; border-bottom: 1px solid var(--warm); color: var(--ink); font-family: 'DM Mono', monospace; font-size: 12px; padding: 7px 10px; width: calc(100% - 32px); outline: none; }
+  #em-sections-wrap .edit-sec-block .edit-sec-editor { min-height: 80px; padding: 9px 12px; outline: none; font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.7; color: var(--ink); }
+  #em-sections-wrap .sec-toolbar { background: #f5f0e8; border-bottom: 1px solid var(--warm); padding: 4px 8px; display: flex; gap: 4px; }
+  #em-sections-wrap .sec-tbtn { background: none; border: 1px solid var(--warm); border-radius: 3px; padding: 2px 7px; font-size: 12px; cursor: pointer; color: var(--ink); }
+  #em-sections-wrap .sec-list-sel { background: var(--cream); border: 1px solid var(--warm); color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 5px; border-radius: 2px; cursor: pointer; }
+  .btn-add-em-sec { background: none; border: 1px dashed var(--warm); border-radius: 6px; width: 100%; padding: 8px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); cursor: pointer; margin-bottom: 4px; }
+  .btn-add-em-sec:hover { border-color: var(--gold); color: var(--ink); }
+  .note-expand-attachments { margin-top: 24px; border-top: 1px solid var(--cream); padding-top: 16px; }
+  .note-expand-attachments h4 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .note-expand-att-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--cream); font-size: 13px; }
+  .note-expand-att-item:last-child { border-bottom: none; }
+  .note-expand-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 16px; }
+
+  /* ── Note card context menu ── */
+  .note-ctx {
+    display: none; position: fixed; z-index: 2000;
+    background: #fff; border: 1.5px solid var(--ink);
+    border-radius: 8px; box-shadow: 4px 4px 0 var(--ink);
+    padding: 4px 0; min-width: 150px; font-family: 'DM Mono', monospace;
+  }
+  .note-ctx.show { display: block; }
+  .note-ctx-item {
+    padding: 9px 16px; font-size: 12px; color: var(--ink);
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+  }
+  .note-ctx-item:hover { background: var(--cream); }
   .note-card.p-HIGH::before   { background: var(--p-high); }
 
   .card-top { display: flex; align-items: flex-start; gap: 8px; }
@@ -181,8 +289,64 @@
 
   .note-body { font-size: 12px; color: #555; line-height: 1.7; flex: 1; }
 
+  /* ── Sections (sidebar create form) ── */
+  .sections-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .section-block { border: 1px solid rgba(255,255,255,.1); border-radius: 5px; overflow: hidden; }
+  .sec-block-head { display: flex; align-items: center; gap: 4px; padding: 5px 8px; background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.07); }
+  .sec-name-fi { flex: 1; background: transparent; border: none; color: rgba(255,255,255,.7); font-family: 'DM Mono', monospace; font-size: 11px; outline: none; }
+  .sec-name-fi::placeholder { color: rgba(255,255,255,.2); }
+  .btn-rm-sec { background: none; border: none; color: rgba(255,255,255,.2); cursor: pointer; font-size: 14px; padding: 0 3px; line-height: 1; transition: color .1s; }
+  .btn-rm-sec:hover { color: #c0392b; }
+  .sec-toolbar { display: flex; gap: 1px; padding: 3px 6px; border-bottom: 1px solid rgba(255,255,255,.05); background: rgba(0,0,0,.12); }
+  .sec-tbtn { background: none; border: none; color: rgba(255,255,255,.38); cursor: pointer; padding: 2px 7px; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.4; transition: all .1s; }
+  .sec-tbtn:hover { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); }
+  .sec-tbtn-div { width: 1px; background: rgba(255,255,255,.08); margin: 2px 3px; }
+  .sec-editor { min-height: 56px; max-height: 140px; overflow-y: auto; padding: 7px 9px; outline: none; color: #d0cdc8; font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.7; }
+  .sec-editor:empty::before { content: attr(data-ph); color: rgba(255,255,255,.18); pointer-events: none; display: block; }
+  .sec-editor ul, .sec-editor ol { padding-left: 16px; margin: 2px 0; }
+  ul.b-flower   { list-style-type: "✿  "; }
+  ul.b-triangle { list-style-type: "▶  "; }
+  ul.b-idea     { list-style-type: "✦  "; }
+  ul.b-diamond  { list-style-type: "◆  "; }
+  ul.b-arrow    { list-style-type: "→  "; }
+  ul.b-star     { list-style-type: "★  "; }
+  .btn-add-sec { width: 100%; padding: 6px; border: 1px dashed rgba(255,255,255,.12); border-radius: 4px; background: transparent; color: rgba(255,255,255,.28); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-top: 2px; }
+  .btn-add-sec:hover { border-color: #c9a84c; color: #c9a84c; }
+
+  /* ── Sections (card edit mode) ── */
+  .edit-sections { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+  .edit-sec-block { border: 1px solid var(--cream); border-radius: 4px; overflow: hidden; }
+  .edit-sec-head { display: flex; align-items: center; gap: 4px; padding: 4px 7px; background: var(--cream); }
+  .edit-sec-name { flex: 1; background: transparent; border: none; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); outline: none; }
+  .edit-sec-toolbar { display: flex; gap: 1px; padding: 2px 5px; background: #f5f3ef; border-bottom: 1px solid var(--cream); }
+  .edit-sec-tbtn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px 6px; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.4; transition: all .1s; }
+  .edit-sec-tbtn:hover { background: var(--cream); color: var(--ink); }
+  .edit-sec-editor { min-height: 50px; max-height: 120px; overflow-y: auto; padding: 6px 8px; outline: none; font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.6; color: var(--text); }
+  .edit-sec-editor:empty::before { content: attr(data-ph); color: rgba(0,0,0,.2); pointer-events: none; display: block; }
+  .edit-sec-editor ul, .edit-sec-editor ol { padding-left: 16px; }
+  .btn-add-edit-sec { width: 100%; padding: 5px; border: 1px dashed var(--warm); border-radius: 3px; background: transparent; color: var(--warm); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-bottom: 4px; }
+  .btn-add-edit-sec:hover { border-color: #c9a84c; color: #c9a84c; }
+
+  /* ── Sections display on card ── */
+  .topic-sections { display: flex; flex-direction: column; gap: 10px; }
+  .topic-sec-title { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; padding-bottom: 3px; border-bottom: 1px solid var(--cream); }
+  .topic-sec-body { font-size: 12px; color: #555; line-height: 1.7; }
+  .topic-sec-body ul, .topic-sec-body ol { padding-left: 16px; margin: 2px 0; }
+  .topic-sec-body b, .topic-sec-body strong { color: var(--ink); }
+  .topic-sec-body em, .topic-sec-body i { color: #666; }
+
   .tags { display: flex; flex-wrap: wrap; gap: 4px; }
-  .tag { font-size: 10px; padding: 2px 8px; background: var(--cream); border: 1px solid var(--warm); border-radius: 2px; color: var(--muted); }
+  .tag { font-size: 10px; padding: 2px 8px; background: var(--cream); border: 1px solid var(--warm); border-radius: 2px; color: var(--muted); cursor: pointer; transition: all .12s; }
+  .tag:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .tag.active { background: var(--gold); color: var(--ink); border-color: var(--gold); font-weight: 600; }
+  .category-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; padding: 2px 10px; border-radius: 99px;
+    background: var(--ink); color: #fff; font-weight: 500; letter-spacing: .4px;
+  }
+  .fi-cat { width: 100%; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: #e0ddd8; font-family: 'DM Mono', monospace; font-size: 12px; padding: 7px 10px; border-radius: 4px; outline: none; }
+  .fi-cat:focus { border-color: var(--gold); }
+  .fi-cat option { background: #1a1a2e; }
 
   /* ── Attachments section ── */
   .attachments-section { border-top: 1px solid var(--cream); padding-top: 8px; }
@@ -279,6 +443,145 @@
   .kw { color: var(--rust); } .val { color: var(--sage); } .typ { color: var(--sky); }
 
   mark { background: #fef08a; border-radius: 2px; padding: 0 2px; }
+
+  /* ── Toast notifications ── */
+  .toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 300; display: flex; flex-direction: column-reverse; gap: 10px; pointer-events: none; }
+  .toast {
+    background: #fff; border: 1px solid var(--warm); border-radius: 8px;
+    padding: 14px 16px; min-width: 280px; max-width: 360px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
+    display: flex; gap: 12px; align-items: flex-start;
+    animation: toastIn .3s ease; pointer-events: all;
+    border-left: 4px solid var(--gold);
+  }
+  .toast.toast-share  { border-left-color: var(--sky); }
+  .toast.toast-edit   { border-left-color: var(--gold); }
+  .toast.toast-out    { animation: toastOut .3s ease forwards; }
+  @keyframes toastIn  { from { opacity:0; transform: translateX(20px) } to { opacity:1; transform: none } }
+  @keyframes toastOut { to   { opacity:0; transform: translateX(20px) } }
+  .toast-icon  { font-size: 20px; flex-shrink: 0; line-height: 1; }
+  .toast-body  { flex: 1; }
+  .toast-title { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+  .toast-msg   { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .toast-close { font-size: 14px; color: var(--warm); cursor: pointer; background: none; border: none; padding: 0; line-height: 1; flex-shrink: 0; transition: color .12s; }
+  .toast-close:hover { color: var(--text); }
+
+  /* ── Notification bell ── */
+  .notif-bell { position: relative; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background .15s; }
+  .notif-bell:hover { background: rgba(255,255,255,.08); }
+  .notif-badge { position: absolute; top: 0; right: 0; width: 16px; height: 16px; background: var(--rust); border-radius: 50%; font-size: 9px; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; display: none; }
+  .notif-badge.show { display: flex; }
+  .notif-panel { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 300px; background: #fff; border: 1px solid var(--warm); border-radius: 8px; box-shadow: 0 8px 32px var(--shadow); z-index: 100; overflow: hidden; }
+  .notif-panel.open { display: block; }
+  .notif-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--cream); font-size: 11px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: .8px; }
+  .notif-panel-clear { font-size: 10px; color: var(--muted); cursor: pointer; background: none; border: none; font-family: 'DM Mono', monospace; padding: 0; }
+  .notif-panel-clear:hover { color: var(--rust); }
+  .notif-list { max-height: 320px; overflow-y: auto; }
+  .notif-item { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--cream); font-size: 11px; color: var(--text); }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .notif-item-body { flex: 1; line-height: 1.5; }
+  .notif-item-time { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .notif-empty { padding: 20px 14px; font-size: 11px; color: var(--muted); text-align: center; }
+
+  /* ── Auth screen ── */
+  .auth-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    align-items: center; justify-content: center;
+    background: #f8f7f0;
+    overflow: hidden;
+  }
+  .auth-overlay.open { display: flex; }
+
+  /* doodle background canvas */
+  .doodle-canvas {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  }
+  .doodle-canvas svg { width: 100%; height: 100%; }
+
+  /* neo-brutalism card */
+  .auth-box {
+    position: relative; z-index: 1;
+    background: #fff;
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    padding: 40px;
+    width: 400px;
+    box-shadow: 7px 7px 0 var(--ink);
+  }
+
+  .auth-logo { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--ink); margin-bottom: 4px; }
+  .auth-tagline { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 28px; }
+
+  .auth-tabs { display: flex; border-bottom: 2.5px solid var(--ink); margin-bottom: 20px; }
+  .auth-tab { flex: 1; padding: 9px 0; text-align: center; font-size: 12px; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2.5px; transition: all .15s; }
+  .auth-tab.active { color: var(--ink); border-bottom-color: var(--gold); font-weight: 600; }
+  .auth-tab:hover:not(.active) { color: var(--text); }
+
+  .auth-form { display: none; flex-direction: column; gap: 12px; }
+  .auth-form.active { display: flex; }
+  .auth-field { display: flex; flex-direction: column; gap: 4px; }
+  .auth-label { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+  .auth-input {
+    padding: 10px 13px; border: 2px solid var(--warm); border-radius: 8px;
+    font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); background: #fff;
+    outline: none; transition: border .15s, box-shadow .15s;
+  }
+  .auth-input::placeholder { color: rgba(0,0,0,.2); }
+  .auth-input:focus { border-color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+
+  .auth-btn {
+    padding: 11px; border: 2.5px solid var(--ink); border-radius: 8px;
+    background: var(--gold); color: var(--ink);
+    font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: transform .1s, box-shadow .1s; margin-top: 4px;
+    box-shadow: 4px 4px 0 var(--ink); letter-spacing: .3px;
+  }
+  .auth-btn:hover  { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink); }
+  .auth-btn:active { transform: translate(3px,3px);   box-shadow: 1px 1px 0 var(--ink); }
+  .auth-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+  .auth-error { font-size: 12px; color: var(--rust); background: #fdecea; border: 1.5px solid #f5c6c2; border-radius: 6px; padding: 8px 12px; display: none; }
+  .auth-error.show { display: block; }
+  .auth-hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 4px; }
+
+  /* ── User bar in sidebar ── */
+  .user-bar { padding: 10px 20px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--ink); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-email { font-size: 10px; color: rgba(255,255,255,.3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btn-logout { font-size: 10px; color: rgba(255,255,255,.3); background: none; border: 1px solid rgba(255,255,255,.1); border-radius: 3px; padding: 3px 8px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all .15s; white-space: nowrap; }
+  .btn-logout:hover { color: var(--rust); border-color: var(--rust); }
+
+  /* ── Owner / share badges on cards ── */
+  .card-owner { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+  .owner-badge { font-size: 9px; padding: 1px 6px; border-radius: 2px; background: #e8f5ee; color: var(--sage); text-transform: uppercase; letter-spacing: .5px; }
+  .shared-badge { font-size: 9px; padding: 1px 6px; border-radius: 2px; background: #e0f2fe; color: var(--sky); text-transform: uppercase; letter-spacing: .5px; }
+  .btn-share { padding: 5px 11px; border: 1px solid var(--sky); color: var(--sky); background: transparent; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .12s; }
+  .btn-share:hover { background: var(--sky); color: #fff; }
+
+  /* ── Share modal ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 8px; padding: 24px; width: 440px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--ink); margin-bottom: 4px; }
+  .modal-subtitle { font-size: 11px; color: var(--muted); margin-bottom: 18px; }
+  .modal-section { margin-bottom: 16px; }
+  .modal-section-label { font-size: 10px; color: var(--muted); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; }
+  .share-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 4px; background: var(--cream); border: 1px solid var(--warm); margin-bottom: 6px; }
+  .share-row-name { flex: 1; font-size: 12px; color: var(--text); }
+  .share-role-sel { font-family: 'DM Mono', monospace; font-size: 11px; padding: 3px 6px; border: 1px solid var(--warm); border-radius: 3px; background: #fff; outline: none; cursor: pointer; }
+  .btn-revoke { padding: 3px 8px; border: 1px solid #fcc; color: var(--rust); background: transparent; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 10px; cursor: pointer; white-space: nowrap; transition: all .12s; }
+  .btn-revoke:hover { background: var(--rust); color: #fff; border-color: var(--rust); }
+  .add-share-row { display: flex; gap: 8px; margin-top: 8px; }
+  .share-user-sel, .share-new-role-sel { font-family: 'DM Mono', monospace; font-size: 12px; padding: 7px 10px; border: 1px solid var(--warm); border-radius: 4px; background: #fff; outline: none; cursor: pointer; }
+  .share-user-sel { flex: 1; }
+  .btn-share-add { padding: 7px 14px; background: var(--ink); color: #fff; border: none; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; white-space: nowrap; transition: opacity .12s; }
+  .btn-share-add:hover { opacity: .8; }
+  .modal-close { width: 100%; margin-top: 16px; padding: 8px; border: 1px solid var(--warm); background: transparent; color: var(--muted); border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; transition: all .12s; }
+  .modal-close:hover { border-color: var(--text); color: var(--text); }
+  .empty-shares { font-size: 12px; color: var(--muted); padding: 8px 0; }
 </style>
 </head>
 <body>
@@ -288,8 +591,8 @@
   <!-- ── Sidebar ── -->
   <aside class="sidebar">
     <div class="sidebar-head">
-      <div class="app-title">Study Notes</div>
-      <div class="app-subtitle">GraphQL · WebSocket · Live</div>
+      <div class="app-title">Sourcebook</div>
+      <div class="app-subtitle">Learn · Organize · Collaborate</div>
       <div class="status-row">
         <div class="pill" id="ws-pill">
           <div class="pill-dot" id="ws-dot"></div>
@@ -302,11 +605,34 @@
       </div>
     </div>
 
-    <!-- Tabs: New Note | Add Attachment -->
+    <!-- User bar -->
+    <div class="user-bar" id="user-bar">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">—</div>
+        <div class="user-email" id="user-email">—</div>
+      </div>
+      <div class="notif-bell" title="Notifications" onclick="toggleNotifPanel()">
+        🔔
+        <div class="notif-badge" id="notif-badge">0</div>
+        <div class="notif-panel" id="notif-panel" onclick="event.stopPropagation()">
+          <div class="notif-panel-head">
+            Notifications
+            <button class="notif-panel-clear" onclick="clearAllNotifs()">Clear all</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div class="notif-empty">No notifications yet</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Log out</button>
+    </div>
+
+    <!-- Tabs: New Note | Live Log -->
     <div class="sidebar-tabs">
-      <div class="stab active" onclick="switchSTab('note', this)">New Note</div>
-      <div class="stab" onclick="switchSTab('attach', this)">Add Resource</div>
+      <div class="stab active" onclick="switchSTab('note', this)">New Topic</div>
       <div class="stab" onclick="switchSTab('log', this)">Live Log</div>
+      <div class="stab" onclick="toggleSidebar()" id="expand-stab" title="Expand form">⤢</div>
     </div>
 
     <!-- Tab: New Note -->
@@ -314,8 +640,8 @@
       <div class="form-wrap">
         <div class="form-row">
           <div class="field">
-            <label class="form-label">Title <span class="req">*</span></label>
-            <input id="new-title" class="fi" type="text" placeholder="Required" maxlength="100">
+            <label class="form-label">Topic <span class="req">*</span></label>
+            <input id="new-title" class="fi" type="text" placeholder="topic you are diving into!" maxlength="100">
           </div>
           <div style="flex:0 0 100px;">
             <label class="form-label">Priority</label>
@@ -326,36 +652,43 @@
             </select>
           </div>
         </div>
-        <label class="form-label">Body <span class="req">*</span></label>
-        <textarea id="new-body" class="fi" placeholder="Required"></textarea>
-        <label class="form-label" style="margin-top:8px;">Tags</label>
-        <input id="new-tags" class="fi" type="text" placeholder="graphql, testing, api" style="margin-bottom:4px;">
+        <label class="form-label">Sections <span style="opacity:.4;font-size:9px;">optional</span></label>
+        <div id="new-sections" class="sections-container"></div>
+        <button type="button" class="btn-add-sec" onclick="addCreateSection()">+ Add Section</button>
+        <label class="form-label" style="margin-top:8px;">Category</label>
+        <select id="new-category" class="fi-cat" style="margin-bottom:10px;">
+          <option value="">— none —</option>
+          <option value="Education">📚 Education</option>
+          <option value="Brainstorming">💡 Brainstorming</option>
+          <option value="Entertainment">🎬 Entertainment</option>
+          <option value="Work">💼 Work</option>
+          <option value="Research">🔬 Research</option>
+          <option value="Personal">🌿 Personal</option>
+          <option value="Health">🏃 Health</option>
+          <option value="Finance">💰 Finance</option>
+        </select>
+        <label class="form-label">Tags</label>
+        <input id="new-tags" class="fi" type="text" placeholder="how would you find this later?" style="margin-bottom:4px;">
         <div class="tag-hint">Comma-separated. Optional.</div>
-        <button class="btn-action btn-gold" id="create-btn" onclick="createNote()">+ Create Note</button>
-      </div>
-    </div>
 
-    <!-- Tab: Add Attachment/Resource -->
-    <div class="stab-panel" id="stab-attach">
-      <div class="form-wrap">
-        <label class="form-label">Note <span class="req">*</span></label>
-        <select id="attach-note-id" class="fi" style="margin-bottom:10px;">
-          <option value="">— select a note —</option>
-        </select>
-        <label class="form-label">Resource Name <span class="req">*</span></label>
-        <input id="attach-filename" class="fi" type="text" placeholder="e.g. GraphQL in 100 Seconds" style="margin-bottom:10px;">
-        <label class="form-label">Type <span class="req">*</span></label>
-        <select id="attach-type" class="fi" style="margin-bottom:10px;">
-          <option value="VIDEO">Video (YouTube etc)</option>
-          <option value="ARTICLE" selected>Article / Blog</option>
-          <option value="PDF">PDF Document</option>
-          <option value="OTHER">Other</option>
-        </select>
-        <label class="form-label">URL <span class="req">*</span></label>
-        <input id="attach-url" class="fi" type="text" placeholder="https://..." style="margin-bottom:10px;">
-        <label class="form-label">Size (bytes) <span style="color:rgba(255,255,255,.2)">optional</span></label>
-        <input id="attach-size" class="fi" type="number" placeholder="0" style="margin-bottom:10px;">
-        <button class="btn-action btn-gold" id="attach-btn" onclick="addAttachment()">+ Add Resource</button>
+        <!-- Optional resource -->
+        <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px;">
+          <div class="form-label" style="margin-bottom:6px;cursor:pointer;user-select:none;" onclick="toggleNewResource()">
+            📎 Add a resource <span id="res-toggle-arrow" style="font-size:10px;opacity:.6;">▸ optional</span>
+          </div>
+          <div id="new-resource-fields" style="display:none;">
+            <input id="new-res-name" class="fi" type="text" placeholder="Resource name" style="margin-bottom:6px;">
+            <select id="new-res-type" class="fi" style="margin-bottom:6px;">
+              <option value="VIDEO">Video (YouTube etc)</option>
+              <option value="ARTICLE" selected>Article / Blog</option>
+              <option value="PDF">PDF Document</option>
+              <option value="OTHER">Other</option>
+            </select>
+            <input id="new-res-url" class="fi" type="text" placeholder="https://..." style="margin-bottom:6px;">
+          </div>
+        </div>
+
+        <button class="btn-action btn-gold" id="create-btn" onclick="createNote()">+ Add Topic</button>
       </div>
     </div>
 
@@ -373,8 +706,8 @@
   <!-- ── Main ── -->
   <main class="main">
     <div class="toolbar">
-      <h2>All Notes</h2>
-      <span class="note-count" id="note-count">0 notes</span>
+      <h2>My Topics</h2>
+      <span class="note-count" id="note-count">0 topics</span>
       <div class="search-wrap">
         <span class="search-icon">⌕</span>
         <input id="search-input" type="text" placeholder="Search…" oninput="onSearch()">
@@ -386,9 +719,20 @@
         <option value="LOW">Low</option>
       </select>
       <select class="filter-select" id="attach-filter" onchange="onFilter()">
-        <option value="">All notes</option>
+        <option value="">All topics</option>
         <option value="true">Has resources</option>
         <option value="false">No resources</option>
+      </select>
+      <select class="filter-select" id="sort-select" onchange="render()">
+        <option value="updated">Last updated</option>
+        <option value="created">Date created</option>
+        <option value="priority">Priority</option>
+        <option value="title">Title A–Z</option>
+      </select>
+      <select class="filter-select" id="group-select" onchange="render()" style="border-color: var(--gold);">
+        <option value="">No grouping</option>
+        <option value="category">Group by Category</option>
+        <option value="priority">Group by Priority</option>
       </select>
     </div>
 
@@ -396,34 +740,312 @@
       <div class="empty"><div class="empty-icon">📚</div>Loading…</div>
     </div>
 
-    <div class="legend">
-      <h3>Schema Design Reference</h3>
-      <div class="legend-grid">
-        <div class="legend-section">
-          <h4>Product-Driven (server enforces)</h4>
-          <span class="kw">input</span> <span class="typ">CreateNoteInput</span> { title<span class="kw">!</span>, body<span class="kw">!</span> }<br>
-          <span class="kw">input</span> <span class="typ">AddAttachmentInput</span> { noteId<span class="kw">!</span>, url<span class="kw">!</span>, type<span class="kw">!</span> }<br>
-          <span class="kw">enum</span> <span class="typ">Priority</span> · <span class="typ">AttachmentType</span><br>
-          Cascade delete: note → attachments wiped
-        </div>
-        <div class="legend-section">
-          <h4>Consumer-Driven (client controls)</h4>
-          <span class="kw">notes</span>(<span class="val">hasAttachments</span>: Boolean) existence check<br>
-          <span class="kw">note</span> { attachments { url filename } } nested query<br>
-          <span class="kw">attachmentsByNote</span>(noteId) cascade verify<br>
-          <span class="kw">noteChanged</span> + <span class="kw">onlineCount</span> multiplexed WS
-        </div>
-      </div>
-    </div>
   </main>
 </div>
 
+<!-- ── Toast container ── -->
+<div class="toast-container" id="toast-container"></div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="collapseSidebar()"></div>
+
+<!-- ── Note right-click context menu ── -->
+<div class="note-ctx" id="note-ctx">
+  <div class="note-ctx-item" onclick="openExpandModal(ctxNoteId)">⤢ &nbsp;Expand view</div>
+  <div class="note-ctx-item" id="note-ctx-edit" onclick="startEdit(ctxNoteId);closeNoteCtx()">✏️ &nbsp;Edit</div>
+  <div class="note-ctx-item" id="note-ctx-delete" onclick="deleteNote(ctxNoteId);closeNoteCtx()" style="color:var(--rust)">🗑 &nbsp;Delete</div>
+</div>
+
+<!-- ── Note expand modal ── -->
+<div class="note-expand-overlay" id="note-expand-overlay" onclick="if(event.target===this)closeExpandModal()">
+  <div class="note-expand-modal" id="note-expand-modal">
+    <button class="note-expand-close" onclick="closeExpandModal()">✕</button>
+    <div id="note-expand-content"></div>
+  </div>
+</div>
+
+<!-- ── Auth Screen ── -->
+<div class="auth-overlay open" id="auth-overlay">
+
+  <!-- ── Doodle background ── -->
+  <div class="doodle-canvas" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <defs>
+        <pattern id="doodle" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+
+        <rect width="200" height="200" fill="#f8f7f0"/>
+
+        <!-- wavy line 1 -->
+        <path d="M0 48 C16 36 32 60 48 48 C64 36 80 60 96 48 C112 36 128 60 144 48 C160 36 176 60 192 48 L200 44"
+              fill="none" stroke="rgba(0,0,0,.45)" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- sparkle star -->
+        <g fill="none" stroke="rgba(0,0,0,.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 18 L25 29 L36 32 L25 35 L22 46 L19 35 L8 32 L19 29 Z"/>
+          <line x1="22" y1="12" x2="22" y2="9"/><line x1="22" y1="52" x2="22" y2="55"/>
+          <line x1="2"  y1="32" x2="-1" y2="32"/><line x1="42" y1="32" x2="45" y2="32"/>
+        </g>
+
+        <!-- heart -->
+        <path d="M152 32 C152 32 142 24 142 18 C142 12 148 10 152 16 C156 10 162 12 162 18 C162 24 152 32 152 32 Z"
+              fill="none" stroke="rgba(0,0,0,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- lightning bolt -->
+        <path d="M188 10 L181 29 L188 29 L179 49 L197 27 L188 27 L196 10 Z"
+              fill="none" stroke="rgba(0,0,0,.65)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- dots cluster -->
+        <circle cx="80" cy="16" r="2.5" fill="rgba(0,0,0,.5)"/>
+        <circle cx="90" cy="24" r="2"   fill="rgba(0,0,0,.4)"/>
+        <circle cx="72" cy="26" r="2"   fill="rgba(0,0,0,.45)"/>
+        <circle cx="83" cy="34" r="2.5" fill="rgba(0,0,0,.5)"/>
+
+        <!-- triangle -->
+        <path d="M116 8 L104 30 L128 30 Z"
+              fill="none" stroke="rgba(0,0,0,.55)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- dashed circle -->
+        <circle cx="170" cy="70" r="18" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+        <!-- flower -->
+        <g fill="none" stroke="rgba(0,0,0,.6)" stroke-width="1.8">
+          <circle cx="32" cy="115" r="7"/>
+          <ellipse cx="32" cy="102" rx="5" ry="10"/>
+          <ellipse cx="32" cy="128" rx="5" ry="10"/>
+          <ellipse cx="19" cy="115" rx="10" ry="5"/>
+          <ellipse cx="45" cy="115" rx="10" ry="5"/>
+        </g>
+
+        <!-- arrow -->
+        <g fill="none" stroke="rgba(0,0,0,.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="76" y1="112" x2="116" y2="112"/>
+          <path d="M105 103 L117 112 L105 121"/>
+        </g>
+
+        <!-- 5-pointed star -->
+        <path d="M168 94 L172 107 L186 107 L175 115 L179 128 L168 120 L157 128 L161 115 L150 107 L164 107 Z"
+              fill="none" stroke="rgba(0,0,0,.5)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- wavy line 2 -->
+        <path d="M0 138 C16 126 32 150 48 138 C64 126 80 150 96 138 C112 126 128 150 144 138 C160 126 176 150 192 138 L200 134"
+              fill="none" stroke="rgba(0,0,0,.35)" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- X mark -->
+        <g stroke="rgba(0,0,0,.6)" stroke-width="2.5" stroke-linecap="round">
+          <line x1="58" y1="135" x2="74" y2="151"/>
+          <line x1="74" y1="135" x2="58" y2="151"/>
+        </g>
+
+        <!-- plus sign -->
+        <g stroke="rgba(0,0,0,.5)" stroke-width="2.5" stroke-linecap="round">
+          <line x1="130" y1="128" x2="130" y2="150"/>
+          <line x1="119" y1="139" x2="141" y2="139"/>
+        </g>
+
+        <!-- small sparkle -->
+        <path d="M172 140 L174 146 L180 148 L174 150 L172 156 L170 150 L164 148 L170 146 Z"
+              fill="none" stroke="rgba(0,0,0,.55)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- sun / starburst -->
+        <g fill="none" stroke="rgba(0,0,0,.6)" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="105" cy="185" r="12"/>
+          <line x1="105" y1="165" x2="105" y2="161"/>
+          <line x1="105" y1="205" x2="105" y2="209"/>
+          <line x1="85"  y1="185" x2="81"  y2="185"/>
+          <line x1="125" y1="185" x2="129" y2="185"/>
+          <line x1="91"  y1="171" x2="88"  y2="168"/>
+          <line x1="119" y1="171" x2="122" y2="168"/>
+          <line x1="91"  y1="199" x2="88"  y2="202"/>
+          <line x1="119" y1="199" x2="122" y2="202"/>
+        </g>
+
+        <!-- leaf -->
+        <g fill="none" stroke="rgba(0,0,0,.5)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M28 175 C42 159 62 159 62 179 C62 193 46 205 28 201 C11 197 15 183 28 175 Z"/>
+          <path d="M28 175 C45 183 55 191 62 179"/>
+        </g>
+
+        <!-- spiral -->
+        <path d="M172 178 C178 172 186 174 186 182 C186 191 178 195 170 191 C162 187 160 178 166 171 C173 163 184 164 190 174"
+              fill="none" stroke="rgba(0,0,0,.45)" stroke-width="1.8" stroke-linecap="round"/>
+
+        <!-- wavy line 3 (faint) -->
+        <path d="M0 196 C16 184 32 208 48 196 C64 184 80 208 96 196 C112 184 128 208 144 196 C160 184 176 208 192 196 L200 192"
+              fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.5" stroke-linecap="round"/>
+
+        <!-- dot row -->
+        <circle cx="48"  cy="163" r="2.5" fill="rgba(0,0,0,.45)"/>
+        <circle cx="58"  cy="167" r="2"   fill="rgba(0,0,0,.4)"/>
+
+        <!-- zigzag -->
+        <path d="M145 165 L157 180 L169 165 L181 180 L193 165"
+              fill="none" stroke="rgba(0,0,0,.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- cloud (top-left wrapping edge) -->
+        <path d="M0 100 Q0 91 7 91 Q8 83 16 84 Q18 76 26 77 Q34 73 36 81 Q44 78 46 86 Q52 85 53 92 Q53 101 0 101 Z"
+              fill="none" stroke="rgba(0,0,0,.4)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#doodle)"/>
+    </svg>
+  </div>
+
+  <div class="auth-box">
+    <div class="auth-logo">Sourcebook</div>
+    <div class="auth-tagline">Learn · Organize · Collaborate</div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Log in</div>
+      <div class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Sign up</div>
+    </div>
+
+    <div class="auth-error" id="auth-error"></div>
+
+    <!-- Login form -->
+    <form class="auth-form active" id="form-login" onsubmit="doLogin(event)">
+      <div class="auth-field">
+        <label class="auth-label">Email</label>
+        <input class="auth-input" id="login-email" type="email" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">Password</label>
+        <input class="auth-input" id="login-password" type="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button class="auth-btn" type="submit" id="login-btn">Log in</button>
+      <div class="auth-hint">Demo accounts: alice@example.com / alice123 &nbsp;·&nbsp; bob@example.com / bob123</div>
+    </form>
+
+    <!-- Register form -->
+    <form class="auth-form" id="form-register" onsubmit="doRegister(event)">
+      <div class="auth-field">
+        <label class="auth-label">Name</label>
+        <input class="auth-input" id="reg-name" type="text" placeholder="Your name" required>
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">Email</label>
+        <input class="auth-input" id="reg-email" type="email" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">Password</label>
+        <input class="auth-input" id="reg-password" type="password" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password">
+      </div>
+      <button class="auth-btn" type="submit" id="register-btn">Create account</button>
+    </form>
+  </div>
+</div>
+
+<!-- ── Share Modal ── -->
+<div class="modal-overlay" id="share-modal" onclick="if(event.target===this)closeShareModal()">
+  <div class="modal">
+    <div class="modal-title" id="share-modal-title">Share Note</div>
+    <div class="modal-subtitle" id="share-modal-subtitle"></div>
+
+    <div class="modal-section">
+      <div class="modal-section-label">Currently shared with</div>
+      <div id="share-current-list"></div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-label">Share with someone</div>
+      <div class="add-share-row">
+        <input type="email" id="share-email-input" placeholder="Enter their email" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:7px 10px;border:1px solid var(--warm);border-radius:4px;outline:none;">
+        <select class="share-new-role-sel" id="share-new-role-sel">
+          <option value="VIEWER">Viewer</option>
+          <option value="EDITOR">Editor</option>
+        </select>
+        <button class="btn-share-add" id="btn-share-add" onclick="doShareNote()">Share</button>
+      </div>
+      <div id="share-msg" style="font-size:11px;margin-top:6px;"></div>
+    </div>
+
+    <button class="modal-close" onclick="closeShareModal()">Close</button>
+  </div>
+</div>
+
 <script>
-const API = 'http://localhost:4000/graphql'
-const WS  = 'ws://localhost:4000/graphql'
+const API = `${location.origin}/graphql`
+const WS  = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/graphql`
+
+// ─── Auth state ───────────────────────────────────────
+let currentUser = null
+
+function getToken() { return sessionStorage.getItem('gql_notes_token') }
+function setToken(t) { sessionStorage.setItem('gql_notes_token', t) }
+function clearToken() { sessionStorage.removeItem('gql_notes_token') }
+
+function setCurrentUser(user) {
+  currentUser = user
+  document.getElementById('user-avatar').textContent = user.name[0].toUpperCase()
+  document.getElementById('user-name').textContent   = user.name
+  document.getElementById('user-email').textContent  = user.email
+}
+
+function showAuthScreen()  { document.getElementById('auth-overlay').classList.add('open') }
+function hideAuthScreen()  { document.getElementById('auth-overlay').classList.remove('open') }
+function showAuthError(msg){ const el = document.getElementById('auth-error'); el.textContent = msg; el.classList.add('show') }
+function clearAuthError()  { document.getElementById('auth-error').classList.remove('show') }
+
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login')
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register')
+  document.getElementById('form-login').classList.toggle('active', tab === 'login')
+  document.getElementById('form-register').classList.toggle('active', tab === 'register')
+  clearAuthError()
+}
+
+async function doLogin(e) {
+  e.preventDefault(); clearAuthError()
+  const email    = document.getElementById('login-email').value.trim()
+  const password = document.getElementById('login-password').value
+  const btn = document.getElementById('login-btn')
+  btn.disabled = true; btn.textContent = 'Logging in…'
+  try {
+    const data = await gqlPublic(
+      `mutation Login($email: String!, $password: String!) {
+         login(email: $email, password: $password) { token user { id name email } }
+       }`, { email, password }
+    )
+    setToken(data.login.token)
+    setCurrentUser(data.login.user)
+    hideAuthScreen()
+    await fetchNotes()
+    initSubscriptions()
+    await loadPendingNotifications()
+  } catch(err) { showAuthError(err.message) }
+  btn.disabled = false; btn.textContent = 'Log in'
+}
+
+async function doRegister(e) {
+  e.preventDefault(); clearAuthError()
+  const name     = document.getElementById('reg-name').value.trim()
+  const email    = document.getElementById('reg-email').value.trim()
+  const password = document.getElementById('reg-password').value
+  const btn = document.getElementById('register-btn')
+  btn.disabled = true; btn.textContent = 'Creating account…'
+  try {
+    const data = await gqlPublic(
+      `mutation Register($name: String!, $email: String!, $password: String!) {
+         register(name: $name, email: $email, password: $password) { token user { id name email } }
+       }`, { name, email, password }
+    )
+    setToken(data.register.token)
+    setCurrentUser(data.register.user)
+    hideAuthScreen()
+    await fetchNotes()
+    initSubscriptions()
+  } catch(err) { showAuthError(err.message) }
+  btn.disabled = false; btn.textContent = 'Create account'
+}
+
+function logout() {
+  clearToken(); currentUser = null
+  allNotes = []
+  document.getElementById('notes-grid').innerHTML = '<div class="empty"><div class="empty-icon">📚</div>Loading…</div>'
+  showAuthScreen()
+}
 
 // ─── Helpers ──────────────────────────────────────────
-async function gql(query, variables = {}) {
+// Public GQL — no auth header (for login/register)
+async function gqlPublic(query, variables = {}) {
   const res = await fetch(API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -431,6 +1053,26 @@ async function gql(query, variables = {}) {
   })
   const { data, errors } = await res.json()
   if (errors?.length) throw new Error(errors.map(e => e.message).join(' | '))
+  return data
+}
+
+// Authenticated GQL — sends JWT
+async function gql(query, variables = {}) {
+  const token = getToken()
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+    body: JSON.stringify({ query, variables }),
+  })
+  const { data, errors } = await res.json()
+  if (errors?.length) {
+    const msg = errors.map(e => e.message).join(' | ')
+    if (msg.includes('Unauthorized')) { logout(); return }
+    throw new Error(msg)
+  }
   return data
 }
 
@@ -466,21 +1108,287 @@ function switchSTab(name, el) {
 }
 
 // ─── State ────────────────────────────────────────────
-let allNotes    = []
-let searchTerm  = ''
+let allNotes        = []
+let searchTerm      = ''
+let activeTag       = null
+let shareModalNoteId = null
+let editingCardId   = null
 
-// ─── Note select in attachment tab ───────────────────
-function populateNoteSelect() {
-  const sel = document.getElementById('attach-note-id')
-  const cur = sel.value
-  sel.innerHTML = '<option value="">— select a note —</option>'
-  allNotes.forEach(n => {
-    const opt = document.createElement('option')
-    opt.value = n.id
-    opt.textContent = `#${n.id} ${n.title.slice(0,30)}`
-    if (n.id === cur) opt.selected = true
-    sel.appendChild(opt)
+// ── Section helpers ──────────────────────────────────────────────────────────
+
+function addCreateSection(name = '', content = '') {
+  const c = document.getElementById('new-sections')
+  const d = document.createElement('div')
+  d.className = 'section-block'
+  d.innerHTML = `
+    <div class="sec-block-head">
+      <input class="sec-name-fi" placeholder="section name" value="${esc(name)}">
+      <button class="btn-rm-sec" type="button" onmousedown="event.preventDefault()" onclick="rmCreateSec(this)" title="Remove">×</button>
+    </div>
+    <div class="sec-toolbar">
+      <button class="sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('bold')"><b>B</b></button>
+      <button class="sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
+      <button class="sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
+      <span class="sec-tbtn-div"></span>
+      <select class="sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List ▾</option><option value="ul:dot">• Bullet</option><option value="ul:flower">✿ Flower</option><option value="ul:triangle">▶ Triangle</option><option value="ul:idea">✦ Idea</option><option value="ul:diamond">◆ Diamond</option><option value="ul:arrow">→ Arrow</option><option value="ul:star">★ Star</option><option value="ol">1. Numbered</option></select>
+    </div>
+    <div class="sec-editor" contenteditable="true" data-ph="let your thoughts flow…">${content}</div>`
+  c.appendChild(d)
+}
+
+function rmCreateSec(btn) {
+  const block = btn.closest('.section-block')
+  const c = block.parentElement
+  if (c.children.length > 1) block.remove()
+}
+
+function collectCreateSections() {
+  const blocks = document.querySelectorAll('#new-sections .section-block')
+  const out = []
+  blocks.forEach(b => {
+    const title = b.querySelector('.sec-name-fi').value.trim()
+    const content = b.querySelector('.sec-editor').innerHTML.trim()
+    if (title || (content && content !== '<br>')) out.push({ title, content })
   })
+  return out
+}
+
+function clearCreateSections() {
+  document.getElementById('new-sections').innerHTML = ''
+  addCreateSection()
+}
+
+function addEditSection(containerId, name = '', content = '') {
+  const c = document.getElementById(containerId)
+  if (!c) return
+  const d = document.createElement('div')
+  d.className = 'edit-sec-block'
+  d.innerHTML = `
+    <div class="edit-sec-head">
+      <input class="edit-sec-name" placeholder="section name" value="${esc(name)}">
+      <button type="button" style="background:none;border:none;cursor:pointer;color:var(--warm);font-size:13px;padding:0 2px;" onmousedown="event.preventDefault()" onclick="this.closest('.edit-sec-block').remove()" title="Remove">×</button>
+    </div>
+    <div class="edit-sec-toolbar">
+      <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('bold')"><b>B</b></button>
+      <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('italic')"><i>I</i></button>
+      <button class="edit-sec-tbtn" type="button" onmousedown="event.preventDefault();document.execCommand('underline')"><u>U</u></button>
+      <select class="edit-sec-list-sel" onmousedown="saveSel()" onchange="applyList(this)"><option value="">List ▾</option><option value="ul:dot">• Bullet</option><option value="ul:flower">✿ Flower</option><option value="ul:triangle">▶ Triangle</option><option value="ul:idea">✦ Idea</option><option value="ul:diamond">◆ Diamond</option><option value="ul:arrow">→ Arrow</option><option value="ul:star">★ Star</option><option value="ol">1. Numbered</option></select>
+    </div>
+    <div class="edit-sec-editor" contenteditable="true" data-ph="let your thoughts flow…">${content}</div>`
+  c.appendChild(d)
+}
+
+function populateEditSections(noteId, bodyJson) {
+  const containerId = `eb-sections-${noteId}`
+  const c = document.getElementById(containerId)
+  if (!c) return
+  c.innerHTML = ''
+  let sections = []
+  try { sections = JSON.parse(bodyJson) } catch (_) {}
+  if (Array.isArray(sections) && sections.length > 0) {
+    sections.forEach(s => addEditSection(containerId, s.title || '', s.content || ''))
+  } else {
+    addEditSection(containerId, '', bodyJson ? `<p>${esc(bodyJson)}</p>` : '')
+  }
+}
+
+function collectEditSections(noteId) {
+  const blocks = document.querySelectorAll(`#eb-sections-${noteId} .edit-sec-block`)
+  const out = []
+  blocks.forEach(b => {
+    const title = b.querySelector('.edit-sec-name').value.trim()
+    const content = b.querySelector('.edit-sec-editor').innerHTML.trim()
+    if (title || (content && content !== '<br>')) out.push({ title, content })
+  })
+  return out
+}
+
+function renderSectionsDisplay(bodyJson) {
+  let sections = []
+  try { sections = JSON.parse(bodyJson) } catch (_) {}
+  if (!Array.isArray(sections) || sections.length === 0) {
+    if (bodyJson && bodyJson.trim()) return `<div class="note-body">${esc(bodyJson)}</div>`
+    return ''
+  }
+  return `<div class="topic-sections">${sections.map(s => `
+    <div class="topic-sec">
+      ${s.title ? `<div class="topic-sec-title">${esc(s.title)}</div>` : ''}
+      <div class="topic-sec-body">${s.content || ''}</div>
+    </div>`).join('')}
+  </div>`
+}
+
+// ─── Note select (no-op, tab removed) ────────────────
+function populateNoteSelect() {}
+
+// ── WYSIWYG list dropdown helpers ────────────────────────────────────────────
+let _savedRange = null
+function saveSel() {
+  const s = window.getSelection()
+  if (s && s.rangeCount > 0) _savedRange = s.getRangeAt(0).cloneRange()
+}
+function applyList(sel) {
+  const val = sel.value
+  sel.value = ''
+  if (!val) return
+  if (_savedRange) {
+    const s = window.getSelection()
+    s.removeAllRanges()
+    s.addRange(_savedRange)
+  }
+  if (val === 'ol') { document.execCommand('insertOrderedList', false, null); return }
+  document.execCommand('insertUnorderedList', false, null)
+  const [, style] = val.split(':')
+  if (style && style !== 'dot') {
+    const anchor = window.getSelection()?.anchorNode
+    const ul = anchor?.parentElement?.closest('ul') || anchor?.closest?.('ul')
+    if (ul) ul.className = 'b-' + style
+  }
+}
+
+// ── Expand / collapse sidebar form ───────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar')
+  const backdrop = document.getElementById('sidebar-backdrop')
+  const btn = document.getElementById('expand-stab')
+  const isExpanded = sidebar.classList.toggle('expanded')
+  backdrop.classList.toggle('show', isExpanded)
+  btn.textContent = isExpanded ? '⤡' : '⤢'
+}
+function collapseSidebar() {
+  document.querySelector('.sidebar').classList.remove('expanded')
+  document.getElementById('sidebar-backdrop').classList.remove('show')
+  const btn = document.getElementById('expand-stab')
+  if (btn) btn.textContent = '⤢'
+}
+
+// ── Note card right-click context menu ───────────────────────────────────────
+let ctxNoteId = null
+const noteCtx = document.getElementById('note-ctx')
+
+document.getElementById('notes-grid').addEventListener('contextmenu', function(e) {
+  const card = e.target.closest('.note-card')
+  if (!card) return
+  e.preventDefault()
+  ctxNoteId = card.dataset.id
+  const note = allNotes.find(n => n.id === ctxNoteId)
+  const isOwner = note?.owner?.id === currentUser?.id
+  const myRole  = isOwner ? 'OWNER' : note?.sharedWith?.find(s => s.user.id === currentUser?.id)?.role ?? 'VIEWER'
+  document.getElementById('note-ctx-edit').style.display   = ['OWNER','EDITOR'].includes(myRole) ? '' : 'none'
+  document.getElementById('note-ctx-delete').style.display = isOwner ? '' : 'none'
+  noteCtx.style.left = e.clientX + 'px'
+  noteCtx.style.top  = e.clientY + 'px'
+  noteCtx.classList.add('show')
+})
+
+document.addEventListener('click', () => noteCtx.classList.remove('show'))
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeNoteCtx(); closeExpandModal() } })
+
+function closeNoteCtx() { noteCtx.classList.remove('show') }
+
+// ── Note expand modal ─────────────────────────────────────────────────────────
+function openExpandModal(id) {
+  closeNoteCtx()
+  const note = allNotes.find(n => n.id === id)
+  if (!note) return
+  const atts = note.attachments || []
+  const tagsHtml = note.tags.length
+    ? `<div class="note-expand-tags">${note.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>`
+    : ''
+  const attHtml = atts.length ? `
+    <div class="note-expand-attachments">
+      <h4>Resources</h4>
+      ${atts.map(a => `
+        <div class="note-expand-att-item">
+          <span>${ATTACH_ICONS[a.attachmentType] || '📎'}</span>
+          <a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.filename)}</a>
+          <span class="attach-type type-${a.attachmentType}" style="margin-left:auto">${a.attachmentType}</span>
+        </div>`).join('')}
+    </div>` : ''
+
+  const isOwner = note.owner?.id === currentUser?.id
+  const myRole  = isOwner ? 'OWNER' : note.sharedWith?.find(s => s.user.id === currentUser?.id)?.role ?? 'VIEWER'
+  const canEdit = ['OWNER','EDITOR'].includes(myRole)
+
+  document.getElementById('note-expand-content').innerHTML = `
+    <div class="note-expand-header">
+      <div class="note-expand-title">${esc(note.title)}</div>
+      ${canEdit ? `<div class="note-expand-header-actions"><button class="btn-expand-edit" onclick="switchExpandToEdit('${note.id}')">Edit</button></div>` : ''}
+    </div>
+    <div class="note-expand-meta">
+      <span class="priority-badge badge-${note.priority}">${note.priority}</span>
+      <span>Updated ${fmtDate(note.updatedAt)}</span>
+      <span>by ${note.owner?.name ?? 'Unknown'}</span>
+    </div>
+    <div class="note-expand-body">${renderSectionsDisplay(note.body) || '<span style="color:var(--muted)">No notes yet.</span>'}</div>
+    ${tagsHtml}
+    ${attHtml}
+  `
+  document.getElementById('note-expand-overlay').classList.add('open')
+}
+
+function switchExpandToEdit(id) {
+  const note = allNotes.find(n => n.id === id)
+  if (!note) return
+  document.getElementById('note-expand-content').innerHTML = `
+    <div class="note-expand-header" style="margin-bottom:20px">
+      <div class="note-expand-title" style="font-size:20px">Editing</div>
+      <div class="note-expand-header-actions">
+        <button class="btn-expand-cancel" onclick="openExpandModal('${id}')">Cancel</button>
+        <button class="btn-expand-save" onclick="saveModalEdit('${id}')">Save</button>
+      </div>
+    </div>
+    <div class="note-expand-edit-form">
+      <input id="em-title-${id}" class="fi" value="${esc(note.title)}" placeholder="Topic title">
+      <select id="em-priority-${id}" class="fi" style="width:160px">
+        ${['LOW','MEDIUM','HIGH'].map(p => `<option value="${p}"${note.priority===p?' selected':''}>${p[0]+p.slice(1).toLowerCase()}</option>`).join('')}
+      </select>
+      <div id="em-sections-wrap">
+        <div id="em-secs-${id}"></div>
+        <button type="button" class="btn-add-em-sec" onclick="addEditSection('em-secs-${id}')">+ Add section</button>
+      </div>
+      <input id="em-tags-${id}" class="fi" value="${esc(note.tags.join(', '))}" placeholder="tags, comma separated">
+    </div>
+  `
+  // populate sections using the existing helper
+  const c = document.getElementById(`em-secs-${id}`)
+  c.innerHTML = ''
+  let sections = []
+  try { sections = JSON.parse(note.body) } catch (_) {}
+  if (Array.isArray(sections) && sections.length > 0) {
+    sections.forEach(s => addEditSection(`em-secs-${id}`, s.title || '', s.content || ''))
+  } else {
+    addEditSection(`em-secs-${id}`, '', note.body ? `<p>${esc(note.body)}</p>` : '')
+  }
+}
+
+async function saveModalEdit(id) {
+  const title    = document.getElementById(`em-title-${id}`)?.value.trim()
+  const priority = document.getElementById(`em-priority-${id}`)?.value
+  const tagsRaw  = document.getElementById(`em-tags-${id}`)?.value.trim()
+  const tags     = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : []
+  const blocks   = document.querySelectorAll(`#em-secs-${id} .edit-sec-block`)
+  const secs     = []
+  blocks.forEach(b => {
+    const t = b.querySelector('.edit-sec-name')?.value.trim()
+    const c = b.querySelector('.edit-sec-editor')?.innerHTML.trim()
+    if (t || (c && c !== '<br>')) secs.push({ title: t, content: c })
+  })
+  const body = secs.length ? JSON.stringify(secs) : ''
+  try {
+    await gql(
+      `mutation Update($id: ID!, $input: UpdateNoteInput!) { updateNote(id: $id, input: $input) { id } }`,
+      { id, input: { title, body, priority, tags } }
+    )
+    // patch local cache so modal view reflects changes immediately
+    const n = allNotes.find(x => x.id === id)
+    if (n) Object.assign(n, { title, body, priority, tags, updatedAt: new Date().toISOString() })
+    openExpandModal(id)
+  } catch (e) { addLog('system', '⚠ Update error: ' + e.message) }
+}
+
+function closeExpandModal() {
+  document.getElementById('note-expand-overlay').classList.remove('open')
 }
 
 // ─── Render ───────────────────────────────────────────
@@ -498,7 +1406,19 @@ function visibleNotes() {
   const af = document.getElementById('attach-filter').value
   if (af === 'true')  list = list.filter(n => n.attachments?.length > 0)
   if (af === 'false') list = list.filter(n => !n.attachments?.length)
+  if (activeTag) list = list.filter(n => n.tags.includes(activeTag))
+
+  const sort = document.getElementById('sort-select')?.value || 'updated'
+  if (sort === 'updated')  list = [...list].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+  if (sort === 'created')  list = [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  if (sort === 'priority') list = [...list].sort((a, b) => ['HIGH','MEDIUM','LOW'].indexOf(a.priority) - ['HIGH','MEDIUM','LOW'].indexOf(b.priority))
+  if (sort === 'title')    list = [...list].sort((a, b) => a.title.localeCompare(b.title))
   return list
+}
+
+function toggleTag(tag) {
+  activeTag = activeTag === tag ? null : tag
+  render()
 }
 
 function render() {
@@ -506,95 +1426,177 @@ function render() {
   const shown = visibleNotes()
   document.getElementById('note-count').textContent =
     shown.length === allNotes.length
-      ? `${allNotes.length} note${allNotes.length !== 1 ? 's' : ''}`
+      ? `${allNotes.length} topic${allNotes.length !== 1 ? 's' : ''}`
       : `${shown.length} of ${allNotes.length}`
 
   if (!shown.length) {
     grid.innerHTML = allNotes.length
-      ? '<div class="empty"><div class="empty-icon">🔍</div>No notes match your filter.</div>'
-      : '<div class="empty"><div class="empty-icon">📚</div>No notes yet. Create one!</div>'
+      ? '<div class="empty"><div class="empty-icon">🔍</div>No topics match your filter.</div>'
+      : '<div class="empty"><div class="empty-icon">📚</div>No topics yet. Add your first one!</div>'
     return
   }
 
-  const editingId = document.querySelector('.note-card.editing')?.dataset.id
-  grid.innerHTML = ''
+  const editingId = editingCardId
+  const groupBy   = document.getElementById('group-select')?.value || ''
+  grid.innerHTML  = ''
 
-  shown.forEach(note => {
-    const atts = note.attachments || []
-    const card = document.createElement('div')
-    card.className = `note-card p-${note.priority}${note.id === editingId ? ' editing' : ''}`
-    card.dataset.id = note.id
-
-    if (note.id === editingId) {
-      card.innerHTML = `
-        <div class="card-top">
-          <input class="edit-input" id="et-${note.id}" value="${esc(note.title)}">
-          <select class="edit-select" id="ep-${note.id}" style="flex:0 0 90px">
-            ${['LOW','MEDIUM','HIGH'].map(p => `<option value="${p}"${note.priority===p?' selected':''}>${p[0]+p.slice(1).toLowerCase()}</option>`).join('')}
-          </select>
+  if (groupBy) {
+    const groups = buildGroups(shown, groupBy)
+    const GROUP_ICONS = { priority: { HIGH: '🔴', MEDIUM: '🟡', LOW: '🟢' } }
+    groups.forEach(({ label, notes }, gi) => {
+      const section = document.createElement('div')
+      section.className = 'group-section'
+      section.dataset.group = label
+      const icon = groupBy === 'priority' ? (GROUP_ICONS.priority[label] || '') + ' ' : ''
+      section.innerHTML = `
+        <div class="group-header" onclick="toggleGroup(this)">
+          <span class="group-header-label">${icon}${esc(label)}</span>
+          <span class="group-header-count">${notes.length}</span>
+          <span class="group-header-toggle">▾</span>
         </div>
-        <textarea class="edit-textarea" id="eb-${note.id}">${esc(note.body)}</textarea>
-        <input class="edit-input" id="etg-${note.id}" value="${esc(note.tags.join(', '))}" placeholder="tags, comma, separated">
-        <div class="note-actions">
-          <button class="btn-sm btn-save" onclick="saveEdit('${note.id}')">Save</button>
-          <button class="btn-sm btn-cancel" onclick="render()">Cancel</button>
-          <button class="btn-sm btn-delete" onclick="deleteNote('${note.id}')">Delete</button>
-        </div>`
-    } else {
-      const tagsHtml = note.tags.length
-        ? `<div class="tags">${note.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>`
-        : ''
+        <div class="group-grid" id="gg-${gi}"></div>
+      `
+      grid.appendChild(section)
+      const gg = section.querySelector('.group-grid')
+      notes.forEach(note => gg.appendChild(buildCard(note, editingId)))
+    })
+    if (editingId) { const en = allNotes.find(n => n.id === editingId); if (en) populateEditSections(editingId, en.body) }
+    populateNoteSelect()
+    return
+  }
 
-      const attachListHtml = atts.map(a => `
-        <div class="attachment-item">
-          <span class="attach-icon">${ATTACH_ICONS[a.attachmentType] || '📎'}</span>
-          <span class="attach-name"><a href="${esc(a.url)}" target="_blank" rel="noopener">${hl(a.filename, searchTerm)}</a></span>
-          <span class="attach-type type-${a.attachmentType}">${a.attachmentType}</span>
-          ${a.sizeBytes ? `<span class="attach-size">${fmtBytes(a.sizeBytes)}</span>` : ''}
-          <button class="btn-remove-attach" onclick="removeAttachment('${a.id}','${note.id}')" title="Remove">✕</button>
-        </div>`).join('')
-
-      const attachHtml = `
-        <div class="attachments-section">
-          <div class="attachments-header" onclick="toggleAttachPanel('${note.id}')">
-            <span>Resources</span>
-            <span class="attach-count-badge ${atts.length ? 'has-items' : ''}">${atts.length}</span>
-            <span style="margin-left:auto;font-size:10px;">${atts.length ? '▾' : '+'}</span>
-          </div>
-          <div class="attachments-list" id="attach-list-${note.id}" style="${atts.length ? '' : 'display:none'}">
-            ${attachListHtml}
-            <div class="add-attach-row" id="quick-attach-${note.id}" style="display:none">
-              <input class="attach-filename" placeholder="Resource name" id="qa-name-${note.id}">
-              <input class="attach-url-input" placeholder="https://..." id="qa-url-${note.id}">
-              <select class="attach-type-sel" id="qa-type-${note.id}">
-                <option value="VIDEO">Video</option>
-                <option value="ARTICLE" selected>Article</option>
-                <option value="PDF">PDF</option>
-                <option value="OTHER">Other</option>
-              </select>
-              <button class="btn-add-attach" onclick="quickAddAttachment('${note.id}')">Add</button>
-            </div>
-            <button class="btn-add-attach" style="margin-top:4px;width:100%;" onclick="toggleQuickAttach('${note.id}')">+ Add resource</button>
-          </div>
-        </div>`
-
-      card.innerHTML = `
-        <div class="card-top">
-          <div class="note-title">${hl(note.title, searchTerm)}</div>
-          <span class="priority-badge badge-${note.priority}">${note.priority}</span>
-        </div>
-        <div class="note-body">${hl(note.body, searchTerm)}</div>
-        ${tagsHtml}
-        ${attachHtml}
-        <div class="note-meta">Updated ${fmtDate(note.updatedAt)}</div>
-        <div class="note-actions">
-          <button class="btn-sm btn-edit" onclick="startEdit('${note.id}')">Edit</button>
-          <button class="btn-sm btn-delete" onclick="deleteNote('${note.id}')">Delete</button>
-        </div>`
-    }
-    grid.appendChild(card)
-  })
+  shown.forEach(note => { grid.appendChild(buildCard(note, editingId)) })
+  if (editingId) { const en = allNotes.find(n => n.id === editingId); if (en) populateEditSections(editingId, en.body) }
   populateNoteSelect()
+}
+
+function buildCard(note, editingId) {
+  const atts = note.attachments || []
+  const card = document.createElement('div')
+  card.className = `note-card p-${note.priority}${note.id === editingId ? ' editing' : ''}`
+  card.dataset.id = note.id
+
+  if (note.id === editingId) {
+    card.innerHTML = `
+      <div class="card-top">
+        <input class="edit-input" id="et-${note.id}" value="${esc(note.title)}">
+        <select class="edit-select" id="ep-${note.id}" style="flex:0 0 90px">
+          ${['LOW','MEDIUM','HIGH'].map(p => `<option value="${p}"${note.priority===p?' selected':''}>${p[0]+p.slice(1).toLowerCase()}</option>`).join('')}
+        </select>
+      </div>
+      <div id="eb-sections-${note.id}" class="edit-sections"></div>
+      <button type="button" class="btn-add-edit-sec" onclick="addEditSection('eb-sections-${note.id}')">+ Add Section</button>
+      <select class="edit-select" id="ec-${note.id}" style="margin-bottom:4px;font-size:11px;">
+        <option value="">— no category —</option>
+        ${['Education','Brainstorming','Entertainment','Work','Research','Personal','Health','Finance'].map(c =>
+          `<option value="${c}"${note.tags.includes('cat:'+c)?' selected':''}>${c}</option>`
+        ).join('')}
+      </select>
+      <input class="edit-input" id="etg-${note.id}" value="${esc(note.tags.filter(t=>!t.startsWith('cat:')).join(', '))}" placeholder="how would you find this later?">
+      <div class="note-actions">
+        <button class="btn-sm btn-save" onclick="saveEdit('${note.id}')">Save</button>
+        <button class="btn-sm btn-cancel" onclick="editingCardId=null;render()">Cancel</button>
+        <button class="btn-sm btn-delete" onclick="deleteNote('${note.id}')">Delete</button>
+      </div>`
+  } else {
+    const catTag   = note.tags.find(t => t.startsWith('cat:'))
+    const visibleTags = note.tags.filter(t => !t.startsWith('cat:'))
+    const catHtml  = catTag ? `<div style="margin-bottom:4px"><span class="category-badge">⬡ ${esc(catTag.slice(4))}</span></div>` : ''
+    const tagsHtml = visibleTags.length
+      ? `<div class="tags">${visibleTags.map(t => `<span class="tag${activeTag===t?' active':''}" onclick="toggleTag('${esc(t)}')">${esc(t)}</span>`).join('')}</div>`
+      : ''
+    const attachListHtml = atts.map(a => `
+      <div class="attachment-item">
+        <span class="attach-icon">${ATTACH_ICONS[a.attachmentType] || '📎'}</span>
+        <span class="attach-name"><a href="${esc(a.url)}" target="_blank" rel="noopener">${hl(a.filename, searchTerm)}</a></span>
+        <span class="attach-type type-${a.attachmentType}">${a.attachmentType}</span>
+        ${a.sizeBytes ? `<span class="attach-size">${fmtBytes(a.sizeBytes)}</span>` : ''}
+        <button class="btn-remove-attach" onclick="removeAttachment('${a.id}','${note.id}')" title="Remove">✕</button>
+      </div>`).join('')
+    const attachHtml = `
+      <div class="attachments-section">
+        <div class="attachments-header" onclick="toggleAttachPanel('${note.id}')">
+          <span>Resources</span>
+          <span class="attach-count-badge ${atts.length ? 'has-items' : ''}">${atts.length}</span>
+          <span style="margin-left:auto;font-size:10px;">${atts.length ? '▾' : '+'}</span>
+        </div>
+        <div class="attachments-list" id="attach-list-${note.id}" style="${atts.length ? '' : 'display:none'}">
+          ${attachListHtml}
+          <div class="add-attach-row" id="quick-attach-${note.id}" style="display:none">
+            <input class="attach-filename" placeholder="Resource name" id="qa-name-${note.id}">
+            <input class="attach-url-input" placeholder="https://..." id="qa-url-${note.id}">
+            <select class="attach-type-sel" id="qa-type-${note.id}">
+              <option value="VIDEO">Video</option>
+              <option value="ARTICLE" selected>Article</option>
+              <option value="PDF">PDF</option>
+              <option value="OTHER">Other</option>
+            </select>
+            <button class="btn-add-attach" onclick="quickAddAttachment('${note.id}')">Add</button>
+          </div>
+          <button class="btn-add-attach" style="margin-top:4px;width:100%;" onclick="toggleQuickAttach('${note.id}')">+ Add resource</button>
+        </div>
+      </div>`
+    const isOwner    = note.owner?.id === currentUser?.id
+    const myShare    = note.sharedWith?.find(s => s.user.id === currentUser?.id)
+    const myRole     = isOwner ? 'OWNER' : myShare?.role ?? 'VIEWER'
+    const shareCount = note.sharedWith?.length ?? 0
+    const ownerHtml  = `
+      <div class="card-owner">
+        <span>${isOwner ? '👤 You own this' : `👤 ${note.owner?.name ?? 'Unknown'}'s note`}</span>
+        ${isOwner  ? `<span class="owner-badge">owner</span>` : ''}
+        ${!isOwner ? `<span class="shared-badge">${myRole.toLowerCase()}</span>` : ''}
+        ${shareCount ? `<span style="margin-left:auto;font-size:10px;color:var(--muted)">shared with ${shareCount}</span>` : ''}
+      </div>`
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="note-title">${hl(note.title, searchTerm)}</div>
+        <span class="priority-badge badge-${note.priority}">${note.priority}</span>
+      </div>
+      ${ownerHtml}
+      ${catHtml}
+      ${renderSectionsDisplay(note.body)}
+      ${tagsHtml}
+      ${attachHtml}
+      <div class="note-meta">Updated ${fmtDate(note.updatedAt)}</div>
+      <div class="note-actions">
+        ${['OWNER','EDITOR'].includes(myRole) ? `<button class="btn-sm btn-edit" onclick="startEdit('${note.id}')">Edit</button>` : ''}
+        ${isOwner ? `<button class="btn-sm btn-share" onclick="openShareModal('${note.id}')">Share</button>` : ''}
+        ${isOwner ? `<button class="btn-sm btn-delete" onclick="deleteNote('${note.id}')">Delete</button>` : ''}
+      </div>`
+  }
+  return card
+}
+
+function buildGroups(notes, groupBy) {
+  const map = new Map()
+  notes.forEach(note => {
+    let keys = []
+    if (groupBy === 'category') {
+      const cat = note.tags.find(t => t.startsWith('cat:'))
+      keys = cat ? [cat.slice(4)] : ['Uncategorised']
+    }
+    if (groupBy === 'priority') keys = [note.priority]
+    if (groupBy === 'tag') {
+      const visible = note.tags.filter(t => !t.startsWith('cat:'))
+      keys = visible.length ? visible : ['Untagged']
+    }
+    keys.forEach(k => {
+      if (!map.has(k)) map.set(k, [])
+      map.get(k).push(note)
+    })
+  })
+  let keys = [...map.keys()]
+  if (groupBy === 'priority') keys = ['HIGH','MEDIUM','LOW'].filter(k => map.has(k))
+  else keys = keys.sort((a, b) => {
+    if (a === 'Uncategorised' || a === 'Untagged') return 1
+    if (b === 'Uncategorised' || b === 'Untagged') return -1
+    return a.localeCompare(b)
+  })
+  return keys.map(k => ({ label: k, notes: map.get(k) }))
+}
+
+function toggleGroup(header) {
+  header.closest('.group-section').classList.toggle('collapsed')
 }
 
 function toggleAttachPanel(noteId) {
@@ -628,6 +1630,8 @@ async function fetchNotes() {
       `query GetNotes($search: String, $priority: Priority, $hasAttachments: Boolean) {
          notes(search: $search, priority: $priority, hasAttachments: $hasAttachments) {
            id title body priority tags createdAt updatedAt
+           owner { id name }
+           sharedWith { user { id name email } role }
            attachments {
              id noteId filename mimeType attachmentType url sizeBytes createdAt
            }
@@ -635,6 +1639,7 @@ async function fetchNotes() {
        }`,
       { search, priority, ...(hasAttachments !== null && { hasAttachments }) }
     )
+    checkForNewShares(data.notes)
     allNotes = data.notes
     render()
   } catch (e) {
@@ -645,55 +1650,87 @@ async function fetchNotes() {
 }
 
 // ─── CRUD ─────────────────────────────────────────────
+function toggleNewResource() {
+  const fields = document.getElementById('new-resource-fields')
+  const arrow  = document.getElementById('res-toggle-arrow')
+  const open   = fields.style.display === 'none'
+  fields.style.display = open ? '' : 'none'
+  arrow.textContent    = open ? '▾ optional' : '▸ optional'
+}
+
 async function createNote() {
   const title    = document.getElementById('new-title').value.trim()
-  const body     = document.getElementById('new-body').value.trim()
+  const sections = collectCreateSections()
+  const body     = sections.length ? JSON.stringify(sections) : ''
   const priority = document.getElementById('new-priority').value
   const tagsRaw  = document.getElementById('new-tags').value.trim()
-  const tags     = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : []
+  const category = document.getElementById('new-category').value
+  const tags     = [
+    ...(category ? [`cat:${category}`] : []),
+    ...(tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [])
+  ]
 
-  if (!title || !body) {
-    if (!title) document.getElementById('new-title').style.borderColor = 'var(--rust)'
-    if (!body)  document.getElementById('new-body').style.borderColor  = 'var(--rust)'
-    setTimeout(() => {
-      document.getElementById('new-title').style.borderColor = ''
-      document.getElementById('new-body').style.borderColor  = ''
-    }, 1400)
+  if (!title) {
+    document.getElementById('new-title').style.borderColor = 'var(--rust)'
+    setTimeout(() => { document.getElementById('new-title').style.borderColor = '' }, 1400)
     return
   }
   document.getElementById('create-btn').disabled = true
   try {
-    await gql(
+    const data = await gql(
       `mutation Create($input: CreateNoteInput!) { createNote(input: $input) { id } }`,
-      { input: { title, body, priority, tags } }
+      { input: { title, body: body || '', priority, tags } }
     )
+    const newNoteId = data.createNote.id
+
+    // Attach resource if filled in
+    const resName = document.getElementById('new-res-name')?.value.trim()
+    const resUrl  = document.getElementById('new-res-url')?.value.trim()
+    const resType = document.getElementById('new-res-type')?.value
+    if (resName && resUrl) {
+      await gql(
+        `mutation AddAttach($input: AddAttachmentInput!) { addAttachment(input: $input) { id } }`,
+        { input: { noteId: newNoteId, filename: resName, attachmentType: resType, url: resUrl, sizeBytes: 0 } }
+      )
+      document.getElementById('new-res-name').value = ''
+      document.getElementById('new-res-url').value  = ''
+    }
+
     document.getElementById('new-title').value    = ''
-    document.getElementById('new-body').value     = ''
+    clearCreateSections()
     document.getElementById('new-tags').value     = ''
+    document.getElementById('new-category').value = ''
     document.getElementById('new-priority').value = 'MEDIUM'
+    // Collapse resource section
+    document.getElementById('new-resource-fields').style.display = 'none'
+    document.getElementById('res-toggle-arrow').textContent = '▸ optional'
   } catch (e) { addLog('system', '⚠ Create error: ' + e.message) }
   document.getElementById('create-btn').disabled = false
 }
 
 function startEdit(id) {
-  document.querySelectorAll('.note-card').forEach(c => c.classList.remove('editing'))
+  editingCardId = id
   render()
   setTimeout(() => document.getElementById(`et-${id}`)?.focus(), 50)
-  const card = document.querySelector(`.note-card[data-id="${id}"]`)
-  if (card) card.classList.add('editing')
 }
 
 async function saveEdit(id) {
   const title    = document.getElementById(`et-${id}`)?.value.trim()
-  const body     = document.getElementById(`eb-${id}`)?.value.trim()
+  const secs     = collectEditSections(id)
+  const body     = secs.length ? JSON.stringify(secs) : ''
   const priority = document.getElementById(`ep-${id}`)?.value
   const tagsRaw  = document.getElementById(`etg-${id}`)?.value.trim()
-  const tags     = tagsRaw != null ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : null
+  const category = document.getElementById(`ec-${id}`)?.value
+  const tags     = [
+    ...(category ? [`cat:${category}`] : []),
+    ...(tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [])
+  ]
   try {
     await gql(
       `mutation Update($id: ID!, $input: UpdateNoteInput!) { updateNote(id: $id, input: $input) { id } }`,
       { id, input: { title, body, priority, tags } }
     )
+    editingCardId = null
   } catch (e) { addLog('system', '⚠ Update error: ' + e.message) }
 }
 
@@ -735,15 +1772,22 @@ async function addAttachment() {
 }
 
 async function quickAddAttachment(noteId) {
-  const filename       = document.getElementById(`qa-name-${noteId}`)?.value.trim()
-  const url            = document.getElementById(`qa-url-${noteId}`)?.value.trim()
-  const attachmentType = document.getElementById(`qa-type-${noteId}`)?.value
-  if (!filename || !url) return
+  const nameEl = document.getElementById(`qa-name-${noteId}`)
+  const urlEl  = document.getElementById(`qa-url-${noteId}`)
+  const typeEl = document.getElementById(`qa-type-${noteId}`)
+  const filename       = nameEl?.value.trim()
+  const url            = urlEl?.value.trim()
+  const attachmentType = typeEl?.value
+  if (!filename || !url) { addLog('system', '⚠ Resource name and URL are required'); return }
   try {
     await gql(
       `mutation AddAttach($input: AddAttachmentInput!) { addAttachment(input: $input) { id } }`,
       { input: { noteId, filename, attachmentType, url, sizeBytes: 0 } }
     )
+    if (nameEl) nameEl.value = ''
+    if (urlEl)  urlEl.value  = ''
+    await fetchNotes()
+    addLog('attach', `📎 Added resource to note`)
   } catch (e) { addLog('system', '⚠ Attach error: ' + e.message) }
 }
 
@@ -755,14 +1799,21 @@ async function removeAttachment(attachId, noteId) {
 }
 
 // ─── WebSocket Subscriptions ──────────────────────────
+let _wsUnsub1 = null, _wsUnsub2 = null, _wsClient = null
+
 function initSubscriptions() {
+  // Tear down any existing subscriptions first
+  if (_wsUnsub1) { try { _wsUnsub1() } catch(_) {} _wsUnsub1 = null }
+  if (_wsUnsub2) { try { _wsUnsub2() } catch(_) {} _wsUnsub2 = null }
+  if (_wsClient) { try { _wsClient.dispose() } catch(_) {} _wsClient = null }
+
   const dot  = document.getElementById('ws-dot')
   const lbl  = document.getElementById('ws-label')
   const pill = document.getElementById('ws-pill')
 
   dot.className = 'pill-dot connecting'
 
-  const client = window.graphqlWs.createClient({
+  const client = _wsClient = window.graphqlWs.createClient({
     url: WS,
     on: {
       connected: () => {
@@ -777,13 +1828,18 @@ function initSubscriptions() {
   })
 
   // ── Subscription 1: noteChanged ──────────────────────
-  client.subscribe(
+  _wsUnsub1 = client.subscribe(
     {
       query: `subscription {
         noteChanged {
           action
+          editorId
+          sharedWithId
+          sharedUserIds
           note {
             id title body priority tags createdAt updatedAt
+            owner { id name }
+            sharedWith { user { id name email } role }
             attachments { id noteId filename mimeType attachmentType url sizeBytes createdAt }
           }
         }
@@ -791,30 +1847,61 @@ function initSubscriptions() {
     },
     {
       next: ({ data }) => {
-        const { action, note } = data.noteChanged
+        try {
+        const { action, note, editorId, sharedWithId, sharedUserIds } = data.noteChanged
         switch (action) {
           case 'CREATED':
             allNotes.push(note)
             addLog('created', `✦ Created <strong>${note.title}</strong> [${note.priority}]`)
             break
+          case 'SHARED':
+            if (currentUser) {
+              if (!allNotes.some(n => n.id === note.id)) {
+                // Recipient — note just appeared in their list
+                allNotes.push(note)
+                showToast('share', '🔗', 'Note shared with you',
+                  `<strong>${esc(note.owner?.name ?? 'Someone')}</strong> shared "<strong>${esc(note.title)}</strong>" with you`)
+                addLog('system', `🔗 "${note.title}" was shared with you`)
+              } else if (note.owner?.id === currentUser.id) {
+                // Owner — confirmation they shared it
+                const newShare = note.sharedWith?.find(s => s.user.id === sharedWithId)
+                const sharedName = newShare?.user?.name ?? 'someone'
+                showToast('share', '🔗', 'Note shared',
+                  `You shared "<strong>${esc(note.title)}</strong>" with <strong>${esc(sharedName)}</strong>`)
+              }
+            }
+            break
           case 'UPDATED':
             allNotes = allNotes.map(n => n.id === note.id ? note : n)
             addLog('updated', `✎ Updated <strong>${note.title}</strong>`)
             setTimeout(() => document.querySelector(`.note-card[data-id="${note.id}"]`)?.classList.add('flash'), 30)
+            checkForEditNotif(note)
             break
           case 'DELETED':
+            if (currentUser) {
+              if (note.owner?.id === currentUser.id) {
+                // Owner — confirmation
+                showToast('edit', '🗑', 'Note deleted',
+                  `"<strong>${esc(note.title)}</strong>" was deleted`)
+              } else if (allNotes.some(n => n.id === note.id)) {
+                // Shared user — note removed from their access
+                showToast('edit', '🗑', 'Note removed',
+                  `<strong>${esc(note.owner?.name ?? 'Someone')}</strong> deleted "<strong>${esc(note.title)}</strong>"`)
+              }
+            }
             allNotes = allNotes.filter(n => n.id !== note.id)
             addLog('deleted', `✕ Deleted <strong>${note.title}</strong> + ${note.attachments?.length || 0} resources (cascade)`)
             break
         }
         render()
+        } catch(err) { console.error('[sub] handler crashed:', err) }
       },
       error: (e) => addLog('system', '⚠ noteChanged error: ' + e.message),
     }
   )
 
   // ── Subscription 2: onlineCount ───────────────────────
-  client.subscribe(
+  _wsUnsub2 = client.subscribe(
     { query: `subscription { onlineCount }` },
     {
       next: ({ data }) => {
@@ -827,18 +1914,244 @@ function initSubscriptions() {
   )
 }
 
+// ─── Share modal ──────────────────────────────────────
+async function openShareModal(noteId) {
+  shareModalNoteId = noteId
+  renderShareModal()
+  document.getElementById('share-modal').classList.add('open')
+}
+
+function closeShareModal() {
+  document.getElementById('share-modal').classList.remove('open')
+  shareModalNoteId = null
+}
+
+function renderShareModal() {
+  const note = allNotes.find(n => n.id === shareModalNoteId)
+  if (!note) return
+
+  document.getElementById('share-modal-title').textContent = note.title
+  document.getElementById('share-modal-subtitle').textContent = `Owner: ${note.owner?.name}`
+
+  // Current shares list
+  const sharesHtml = note.sharedWith?.length
+    ? note.sharedWith.map(s => `
+        <div class="share-row">
+          <span class="share-row-name">👤 ${esc(s.user.name)} <span style="color:var(--muted);font-size:10px;">${esc(s.user.email)}</span></span>
+          <select class="share-role-sel" onchange="updatePermission('${note.id}','${s.user.id}',this.value)">
+            <option value="EDITOR" ${s.role==='EDITOR'?'selected':''}>Editor</option>
+            <option value="VIEWER" ${s.role==='VIEWER'?'selected':''}>Viewer</option>
+          </select>
+          <button class="btn-revoke" onclick="revokeAccess('${note.id}','${s.user.id}')">Revoke</button>
+        </div>`).join('')
+    : '<div class="empty-shares">Not shared with anyone yet.</div>'
+
+  document.getElementById('share-current-list').innerHTML = sharesHtml
+
+  document.getElementById('share-email-input').value = ''
+  document.getElementById('share-msg').textContent = ''
+}
+
+async function doShareNote() {
+  const email = document.getElementById('share-email-input').value.trim()
+  const role  = document.getElementById('share-new-role-sel').value
+  const msg   = document.getElementById('share-msg')
+  if (!email) return
+  msg.style.color = 'var(--muted)'; msg.textContent = 'Sharing…'
+  try {
+    const data = await gql(
+      `mutation ShareByEmail($noteId: ID!, $email: String!, $role: Role!) {
+         shareNoteByEmail(noteId: $noteId, email: $email, role: $role) { user { name } role }
+       }`,
+      { noteId: shareModalNoteId, email, role }
+    )
+    const name = data.shareNoteByEmail.user.name
+    msg.style.color = 'var(--sage)'; msg.textContent = `✓ Shared with ${name} as ${role}`
+    document.getElementById('share-email-input').value = ''
+    await fetchNotes()
+    renderShareModal()
+    addLog('system', `🔗 Shared note with ${name} as ${role}`)
+  } catch(e) {
+    msg.style.color = 'var(--rust)'; msg.textContent = '⚠ ' + e.message
+  }
+}
+
+async function updatePermission(noteId, userId, role) {
+  try {
+    const data = await gql(
+      `mutation UpdatePerm($noteId: ID!, $userId: ID!, $role: Role!) {
+         updateNotePermission(noteId: $noteId, userId: $userId, role: $role) { user { name } role }
+       }`,
+      { noteId, userId, role }
+    )
+    await fetchNotes(); renderShareModal()
+    addLog('system', `✎ Updated ${data.updateNotePermission.user.name} to ${role}`)
+  } catch(e) { addLog('system', '⚠ ' + e.message) }
+}
+
+async function revokeAccess(noteId, userId) {
+  try {
+    const data = await gql(
+      `mutation Revoke($noteId: ID!, $userId: ID!) {
+         revokeNoteAccess(noteId: $noteId, userId: $userId) { user { name } }
+       }`,
+      { noteId, userId }
+    )
+    await fetchNotes(); renderShareModal()
+    addLog('system', `✕ Revoked access for ${data.revokeNoteAccess.user.name}`)
+  } catch(e) { addLog('system', '⚠ ' + e.message) }
+}
+
+// ─── Notifications ────────────────────────────────────
+let unreadCount = 0
+let knownNoteIds = new Set()
+let notifHistory = []
+
+function showToast(type, icon, title, msg) {
+  // Add to history
+  const entry = { type, icon, title, msg, time: Date.now() }
+  notifHistory.unshift(entry)
+  renderNotifPanel()
+
+  // Show toast popup
+  const container = document.getElementById('toast-container')
+  const el = document.createElement('div')
+  el.className = `toast toast-${type}`
+  el.innerHTML = `
+    <span class="toast-icon">${icon}</span>
+    <div class="toast-body">
+      <div class="toast-title">${title}</div>
+      <div class="toast-msg">${msg}</div>
+    </div>
+    <button class="toast-close" onclick="dismissToast(this.parentElement)">✕</button>`
+  container.appendChild(el)
+
+  // bump badge
+  unreadCount++
+  const badge = document.getElementById('notif-badge')
+  badge.textContent = unreadCount > 9 ? '9+' : unreadCount
+  badge.classList.add('show')
+
+  // auto-dismiss after 6s
+  setTimeout(() => dismissToast(el), 6000)
+}
+
+function dismissToast(el) {
+  if (!el || !el.parentElement) return
+  el.classList.add('toast-out')
+  setTimeout(() => el.remove(), 300)
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel')
+  const isOpen = panel.classList.toggle('open')
+  if (isOpen) {
+    unreadCount = 0
+    const badge = document.getElementById('notif-badge')
+    badge.classList.remove('show')
+  }
+}
+
+function clearAllNotifs() {
+  notifHistory = []
+  renderNotifPanel()
+}
+
+function renderNotifPanel() {
+  const list = document.getElementById('notif-list')
+  if (!notifHistory.length) {
+    list.innerHTML = '<div class="notif-empty">No notifications yet</div>'
+    return
+  }
+  list.innerHTML = notifHistory.map(n => `
+    <div class="notif-item">
+      <div class="notif-item-icon">${n.icon}</div>
+      <div class="notif-item-body">
+        <div>${n.title}</div>
+        <div>${n.msg}</div>
+        <div class="notif-item-time">${fmtRelTime(n.time)}</div>
+      </div>
+    </div>`).join('')
+}
+
+function fmtRelTime(ts) {
+  const diff = Math.floor((Date.now() - ts) / 1000)
+  if (diff < 60)  return 'just now'
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`
+  return `${Math.floor(diff/3600)}h ago`
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.notif-bell')) {
+    document.getElementById('notif-panel')?.classList.remove('open')
+  }
+})
+
+// Called after fetchNotes — detect newly shared notes
+function checkForNewShares(freshNotes) {
+  if (!currentUser || knownNoteIds.size === 0) {
+    knownNoteIds = new Set(freshNotes.map(n => n.id))
+    return
+  }
+  freshNotes.forEach(note => {
+    if (!knownNoteIds.has(note.id) && note.owner?.id !== currentUser.id) {
+      showToast('share', '🔗', 'Note shared with you',
+        `<strong>${esc(note.owner?.name ?? 'Someone')}</strong> shared "<strong>${esc(note.title)}</strong>" with you`)
+    }
+  })
+  knownNoteIds = new Set(freshNotes.map(n => n.id))
+}
+
+// Called from subscription — notify for any update
+function checkForEditNotif(note) {
+  if (!currentUser) return
+  showToast('edit', '✎', 'Note updated',
+    `"<strong>${esc(note.title)}</strong>" was updated`)
+}
+
+// ─── Pending notifications on login ───────────────────
+async function loadPendingNotifications() {
+  try {
+    const data = await gql(`query { myNotifications { id type message read createdAt } }`)
+    const unread = data.myNotifications.filter(n => !n.read)
+    if (!unread.length) return
+    unread.forEach(n => {
+      const icon = n.type === 'SHARED' ? '🔗' : '🗑'
+      const title = n.type === 'SHARED' ? 'Note shared with you' : 'Note removed'
+      showToast(n.type === 'SHARED' ? 'share' : 'edit', icon, title, n.message)
+    })
+    await gql(`mutation { markNotificationsRead }`)
+  } catch(e) {}
+}
+
 // ─── Init ─────────────────────────────────────────────
-fetchNotes().then(() => initSubscriptions())
+async function init() {
+  const token = getToken()
+  if (!token) { showAuthScreen(); return }
+
+  // Verify token + load current user
+  try {
+    const data = await gql(`query { me { id name email } }`)
+    if (!data?.me) { logout(); return }
+    setCurrentUser(data.me)
+    hideAuthScreen()
+    await fetchNotes()
+    initSubscriptions()
+    await loadPendingNotifications()
+  } catch { logout() }
+}
+
+init()
 
 document.getElementById('new-title').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('new-body').focus()
-})
-document.getElementById('new-body').addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') createNote()
+  if (e.key === 'Enter') document.querySelector('#new-sections .sec-editor')?.focus()
 })
 document.getElementById('search-input').addEventListener('keydown', e => {
   if (e.key === 'Escape') { e.target.value = ''; searchTerm = ''; render() }
 })
+// init create-form sections
+addCreateSection()
 </script>
 </body>
 </html>

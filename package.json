@@ -6,23 +6,43 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js",
+    "start:dd": "node --import ./datadog.js server.js",
+    "dev": "node --import ./datadog.js --watch server.js",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
-    "jira": "node jira.js"
+    "test:cucumber": "cucumber-js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "jira": "node jira.js",
+    "datadog:agent": "DD_API_KEY=${DD_API_KEY} docker compose -f docker-compose.datadog.yml up -d",
+    "k6:build": "docker run --rm -u \"$(id -u):$(id -g)\" -v \"${PWD}:/xk6\" grafana/xk6 build --with github.com/LeonAdato/xk6-output-statsd@latest --output /xk6/k6-with-statsd",
+    "k6:smoke": "K6_STATSD_ENABLE_TAGS=true DD_ENV=${DD_ENV:-development} ./k6-with-statsd run --out output-statsd load/load-test-script.js",
+    "k6:load": "K6_STATSD_ENABLE_TAGS=true DD_ENV=${DD_ENV:-development} ./k6-with-statsd run --out output-statsd load/load-test.js"
   },
   "jest": {
     "testEnvironment": "node",
     "transform": {}
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dd-trace": "^5.92.0",
+    "dotenv": "^16.4.7",
     "graphql": "^16.8.1",
     "graphql-ws": "^5.14.3",
     "graphql-yoga": "^5.3.0",
-    "ws": "^8.16.0",
-    "dotenv": "^16.4.7"
+    "jsonwebtoken": "^9.0.3",
+    "k6": "^0.0.0",
+    "npm": "^11.11.1",
+    "pg": "^8.20.0",
+    "start": "^5.1.0",
+    "stripe": "^17.5.0",
+    "ws": "^8.16.0"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "^12.7.0",
     "@jest/globals": "^30.2.0",
-    "jest": "^30.2.0"
+    "@playwright/test": "^1.58.2",
+    "chai": "^6.2.2",
+    "jest": "^30.2.0",
+    "pactum": "^3.9.1"
   }
 }
