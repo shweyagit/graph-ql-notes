@@ -317,8 +317,8 @@
   ul.b-diamond  { list-style-type: "◆  "; }
   ul.b-arrow    { list-style-type: "→  "; }
   ul.b-star     { list-style-type: "★  "; }
-  .btn-add-sec { width: 100%; padding: 6px; border: 1px dashed rgba(255,255,255,.12); border-radius: 4px; background: transparent; color: rgba(255,255,255,.28); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-top: 2px; }
-  .btn-add-sec:hover { border-color: #c9a84c; color: #c9a84c; }
+  .btn-add-sec { width: 100%; padding: 6px; border: 1px dashed rgba(201,168,76,.5); border-radius: 4px; background: transparent; color: #c9a84c; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-top: 2px; }
+  .btn-add-sec:hover { border-color: #c9a84c; color: #e0bd60; background: rgba(201,168,76,.07); }
 
   /* ── Sections (card edit mode) ── */
   .edit-sections { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
@@ -331,8 +331,8 @@
   .edit-sec-editor { min-height: 50px; max-height: 120px; overflow-y: auto; padding: 6px 8px; outline: none; font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.6; color: var(--text); }
   .edit-sec-editor:empty::before { content: attr(data-ph); color: rgba(0,0,0,.2); pointer-events: none; display: block; }
   .edit-sec-editor ul, .edit-sec-editor ol { padding-left: 16px; }
-  .btn-add-edit-sec { width: 100%; padding: 5px; border: 1px dashed var(--warm); border-radius: 3px; background: transparent; color: var(--warm); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-bottom: 4px; }
-  .btn-add-edit-sec:hover { border-color: #c9a84c; color: #c9a84c; }
+  .btn-add-edit-sec { width: 100%; padding: 5px; border: 1px dashed rgba(201,168,76,.5); border-radius: 3px; background: transparent; color: #c9a84c; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all .15s; margin-bottom: 4px; }
+  .btn-add-edit-sec:hover { border-color: #c9a84c; color: #e0bd60; background: rgba(201,168,76,.07); }
 
   /* ── Sections display on card ── */
   .topic-sections { display: flex; flex-direction: column; gap: 10px; }
@@ -410,11 +410,11 @@
   .attach-url-input { flex: 2; min-width: 100px; }
   .attach-type-sel  { flex: 0 0 90px; }
   .btn-add-attach {
-    padding: 5px 10px; background: var(--ink); color: #fff;
+    padding: 5px 10px; background: var(--gold); color: var(--ink);
     border: none; border-radius: 3px; font-family: 'DM Mono', monospace;
-    font-size: 11px; cursor: pointer; white-space: nowrap; transition: opacity .12s;
+    font-size: 11px; cursor: pointer; white-space: nowrap; transition: opacity .12s; font-weight: 600;
   }
-  .btn-add-attach:hover { opacity: .8; }
+  .btn-add-attach:hover { opacity: .85; }
 
   .note-meta { font-size: 10px; color: var(--warm); border-top: 1px solid var(--cream); padding-top: 7px; }
 
@@ -605,10 +605,6 @@
           <div class="pill-dot" id="ws-dot"></div>
           <span id="ws-label">Connecting</span>
         </div>
-        <div class="pill visitor-pill">
-          <div class="pill-dot" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa;"></div>
-          <span id="visitor-count">–</span> online
-        </div>
       </div>
     </div>
 
@@ -680,8 +676,8 @@
 
         <!-- Resource -->
         <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px;">
-          <div class="form-label" style="margin-bottom:6px;cursor:pointer;user-select:none;" onclick="toggleNewResource()">
-            📎 Add a resource <span id="res-toggle-arrow" style="font-size:10px;opacity:.6;">▸</span>
+          <div class="form-label" style="margin-bottom:6px;cursor:pointer;user-select:none;color:#c9a84c;" onclick="toggleNewResource()">
+            📎 Add a resource <span id="res-toggle-arrow" style="font-size:10px;">▸</span>
           </div>
           <div id="new-resource-fields" style="display:none;">
             <input id="new-res-name" class="fi" type="text" placeholder="Resource name" style="margin-bottom:6px;">
@@ -1919,17 +1915,6 @@ function initSubscriptions() {
   )
 
   // ── Subscription 2: onlineCount ───────────────────────
-  _wsUnsub2 = client.subscribe(
-    { query: `subscription { onlineCount }` },
-    {
-      next: ({ data }) => {
-        const count = data.onlineCount
-        document.getElementById('visitor-count').textContent = count
-        addLog('visitor', `👁 Visitors online: <strong>${count}</strong>`)
-      },
-      error: (e) => addLog('system', '⚠ onlineCount error: ' + e.message),
-    }
-  )
 }
 
 // ─── Share modal ──────────────────────────────────────
